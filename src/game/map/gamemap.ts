@@ -31,6 +31,7 @@ export class GameMap{
     this.highlights.is_displayed = false;
 
     this.power_bar = new Power.PowerBar(100, 50);
+    this.generator_locations = [];
   }
   init_grid(){
     this.grid.fill_walls(this.scene);
@@ -42,7 +43,12 @@ export class GameMap{
     this.wire_map.add_source(this.scene, coords);
     const generator = this.structure_map.add_structure_type(this.scene, 
       StructureTiles.StructureType.Generator, coords, this.power_bar);
+    this.generator_locations.push(coords);
     return generator ? generator as StructureTiles.GeneratorTile : undefined;
+  }
+
+  get_generator_tiles(): StructureTiles.StructureTile[]{
+    return this.structure_map.get_structure_tiles(this.generator_locations);
   }
 
   add_wire_on_player(world_point: Phaser.Math.Vector2, player:Player,

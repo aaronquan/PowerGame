@@ -7,7 +7,9 @@ export class InfoDebugUI{
   info_text: Phaser.GameObjects.Text;
   line2: Phaser.GameObjects.Text; 
   line3: Phaser.GameObjects.Text; 
-  line4: Phaser.GameObjects.Text; 
+  line4: Phaser.GameObjects.Text;
+
+  line5: Phaser.GameObjects.Text;
   constructor(scene: Phaser.Scene){ 
     this.scene = scene;
     this.background = this.scene.add.graphics();
@@ -18,9 +20,10 @@ export class InfoDebugUI{
     this.line2 = this.scene.add.text(22, 44, "", {color: "black"});
     this.line3 = this.scene.add.text(22, 66, "", {color: "black"});
     this.line4 = this.scene.add.text(22, 88, "", {color: "black"});
+
+    this.line5 = this.scene.add.text(22, 110, "", {color: "black"});
   }
   
-
   refresh_display_info(info: Map.GridInfo| undefined){
     if(info == undefined){
       this.background.setVisible(false);
@@ -32,5 +35,9 @@ export class InfoDebugUI{
       this.line3.setText("Power: "+ (info.power ? "true" : "false"));
       this.line4.setText(info.structure_power ? "true" : "false");
     }
+  }
+
+  new_position(pos:Phaser.Math.Vector2){
+    this.line5.setText(pos.x.toFixed()+" "+pos.y.toFixed());
   }
 }

@@ -159,6 +159,12 @@ export class GridTest extends Scene{
       else if(key == 'g'){
         this.map.refresh_highlights();
         this.map.toggle_highlights();
+      }else if(key == 'h'){
+        this.critters.toggle_health_bars();
+      }
+
+      else if(key == 'z'){
+        this.spawn_blue();
       }
     });
     
@@ -166,7 +172,7 @@ export class GridTest extends Scene{
     this.light_squares_rectangles = [];
 
     this.critters = new Critter.CritterCollection();
-    const tc = new Critter.BlueCritter(this, 200, 200);
+    const tc = new Critter.BlueCritter(this, 250, 200);
     const tc2 = new Critter.BlueCritter(this, 300, 200);
     this.critters.add_critter(tc);
     this.critters.add_critter(tc2);
@@ -174,8 +180,9 @@ export class GridTest extends Scene{
     this.time.addEvent({delay: 2000, callback: () => {
       //this.spawn_blue()
     }})
-
-    const test_enemy_target = this.map.grid.global_coordinates({x:5, y:5});
+    
+    const test_enemy_target = this.map.grid.global_coordinates({x:5, y:5}, true);
+    console.log(test_enemy_target);
     this.critters.set_target(test_enemy_target);
 
     this.ui.init_weapons(this.player.weapons);
@@ -203,13 +210,14 @@ export class GridTest extends Scene{
     this.critters.spawn(this, new Phaser.Math.Vector2(400, 400), Critter.CritterType.Blue);
     const test_enemy_target = this.map.grid.global_coordinates({x:5, y:5});
     this.critters.set_target(test_enemy_target);
-    this.time.addEvent({delay: 2000, callback: () => {
+    /*this.time.addEvent({delay: 2000, callback: () => {
       this.spawn_blue()
-    }})
+    }})*/
   }
   update(){
     const pointer = this.input.activePointer;
     const world_point = this.camera.getWorldPoint(pointer.x, pointer.y);
+    this.ui.info_debug.new_position(world_point);
     //this.camera.useBounds = true
     //console.log(this.camera.worldView);
     const camera_bounds = this.camera.worldView;
@@ -230,9 +238,14 @@ export class GridTest extends Scene{
     this.player.update_projectiles();
 
     this.critters.update();
+    //console.log(this.critters);
 
     this.critters.player_hit_enemy_test(this.player.projectiles);
-    //this.critters.collision_structure_tile()
+
+    const generator_tiles = this.map.get_generator_tiles();
+    for(const tile of generator_tiles){
+      this.critters.collision_structure_tile(tile);
+    }
 
     const world_return = this.player.update_from_world(this.map.grid);
     if(world_return.changed_coords){

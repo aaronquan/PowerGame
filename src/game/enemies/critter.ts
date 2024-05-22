@@ -3,6 +3,7 @@ import { Enemy } from "./enemy";
 import * as Death from "./death";
 import * as StructureTiles from "./../structures/map/structuretiles";
 import * as Effects from "./../entity/effects";
+import * as Player from "./../player/player";
 
 export enum CritterType {
   Blue
@@ -11,6 +12,9 @@ export enum CritterType {
 export class CritterCollection{
   critters: Map<number, Critter>;
   next_id: number;
+
+  // health bars as a global
+
   constructor(){
     this.critters = new Map();
     this.next_id = 0;
@@ -32,11 +36,22 @@ export class CritterCollection{
     this.next_id += 1;
     return id;
   }
+
+  point_hit(point: Phaser.Math.Vector2): Critter[]{
+    const critters: Critter[] = [];
+    for(const [id, critter] of this.critters){
+      if(critter.point_collision(point)){
+        critters.push(critter);
+      }
+    }
+    return critters;
+  }
   collision_structure_tile(tile: StructureTiles.StructureTile){
     for(const [id, critter] of this.critters){
       if(critter.rect_collision(tile.getBounds())){
         const hit_effect = critter.on_structure_collision(tile);
         if(hit_effect.destroy){
+          console.log("hit gen")
           this.remove_critter(id);
         }
       }
@@ -67,7 +82,10 @@ export class CritterCollection{
       this.remove_critter(i);
     }
   }
-  enemy_hit_player_test(){
+  enemy_hit_player_test(player:Player.Player){
+
+  }
+  set_closest_target(){
 
   }
   set_target(target: Phaser.Math.Vector2){
@@ -78,6 +96,11 @@ export class CritterCollection{
   update(){
     for(const [id, critter] of this.critters){
       critter.update();
+    }
+  }
+  toggle_health_bars(){
+    for(const [id, critter] of this.critters){
+      critter.toggle_health_bar();
     }
   }
 }
@@ -105,6 +128,9 @@ export class Critter extends Enemy{
     this.collision_area = new Phaser.Geom.Circle(this.x, this.y, this.width/2);
     return this.collision_area;
   }
+  point_collision(point: Phaser.Math.Vector2){
+    return this.collision_area.contains(point.x, point.y);
+  }
   circle_collision(circle: Phaser.Geom.Circle){
     return Phaser.Geom.Intersects.CircleToCircle(this.collision_area, circle);
   }
@@ -119,7 +145,7 @@ export class Critter extends Enemy{
     }
   }
   move_to_target(target: Phaser.Math.Vector2){
-    const vec = new Phaser.Math.Vector2(target.x-this.x, target.y-this.x);
+    const vec = new Phaser.Math.Vector2(target.x-this.x, target.y-this.y);
     vec.normalize();
     vec.scale(this.speed);
     this.setVelocity(vec.x, vec.y);
@@ -127,6 +153,7 @@ export class Critter extends Enemy{
   
   update(){
     this.collision_area = new Phaser.Geom.Circle(this.x, this.y, this.width/2);
+    this.health_bar.update_position(this.x, this.y);
   }
   get_position(): Phaser.Math.Vector2{
     return new Phaser.Math.Vector2(this.x, this.y);
@@ -157,6 +184,8 @@ export class Critter extends Enemy{
 export class BlueCritter extends Critter{
   constructor(scene: Phaser.Scene, x:number, y:number){
     super(scene, x, y, 'blue');
+    this.max_health = 50;
+    this.health = 50;
   }
 }
 
