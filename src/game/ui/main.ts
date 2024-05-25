@@ -6,12 +6,17 @@ import { WeaponUI } from "./weapon_slots";
 import * as Power from "./../structures/power/power";
 import { InfoDebugUI } from "./info_debug";
 import * as Map from "./../map/gamemap";
+import { PlayerInventoryUI } from "./player_inventory";
+
+import * as Inventory from "./../player/inventory";
 
 export class GridTestUI extends Phaser.Scene{
   test_text!: Phaser.GameObjects.Text;
   power_bar_ui: PowerBarUI;
   weapon_ui: WeaponUI;
   info_debug: InfoDebugUI;
+
+  player_inventory: PlayerInventoryUI;
 
   wires_text: Phaser.GameObjects.Text;
   constructor(){
@@ -23,6 +28,11 @@ export class GridTestUI extends Phaser.Scene{
     this.power_bar_ui = new PowerBarUI(this);
     this.wires_text = this.add.text(500, 500, 'Wires', {color: 'white'});
     this.info_debug = new InfoDebugUI(this);
+
+    this.player_inventory = new PlayerInventoryUI(this);
+  }
+  init_inventory(inventory: Inventory.PlayerInventory){
+    this.player_inventory.init_inventory(inventory);
   }
   init_weapons(weapon_holder: WeaponHolder){
     this.weapon_ui.init(weapon_holder);

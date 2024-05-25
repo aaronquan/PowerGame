@@ -5,6 +5,7 @@ import * as Projectile from "../projectiles/projectile";
 
 import * as Power from "./../structures/power/power";
 import * as GameMap from './../map/gamemap';
+import * as Inventory from "./inventory";
 
 export class Player extends Phaser.Physics.Arcade.Sprite{
   move_speed:number;
@@ -22,6 +23,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite{
   power_bar: Power.PowerBar;
 
   n_wires: number;
+
+  inventory: Inventory.PlayerInventory;
 
   constructor(scene: Phaser.Scene, x:number, y:number){
     super(scene, x, y, 'player');
@@ -57,6 +60,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite{
     this.is_shooting = false;
 
     this.immunity_duration = 1000;
+
+    this.inventory = new Inventory.PlayerInventory(5, 5);
     //this.power_bar = new PowerBar(100, 50);
   }
   set_power_bar(power_bar: Power.PowerBar){

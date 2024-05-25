@@ -27,14 +27,16 @@ export class LivingMovingEntity extends Sprites.DisplayPhysicsSprite{
 
   //}
   display_health_bar(){
+    this.health_bar.visible = true;
     this.health_bar.show();
   }
   hide_health_bar(){
+    this.health_bar.visible = false;
     this.health_bar.hide();
   }
   toggle_health_bar(){
-    this.health_bar.visible = !this.health_bar.visible;
-    if(this.health_bar.visible){
+    //this.health_bar.visible = !this.health_bar.visible;
+    if(!this.health_bar.visible){
       this.display_health_bar();
     }else{
       this.hide_health_bar();
@@ -99,5 +101,22 @@ class HealthBar{
     this.health_bar.setX(this.background.x); 
     this.health_bar.setY(this.background.y);
     this.health_bar.setVisible(this.visible)
+  }
+}
+
+export enum InventoryEntityType {
+  Blank, Weapon, Critter
+}
+
+export class InventoryEntity{
+  type:InventoryEntityType;
+  constructor(type: InventoryEntityType){
+    this.type = type;
+  }
+  is_blank(): boolean{
+    return this.type == InventoryEntityType.Blank;
+  }
+  static new_blank(): InventoryEntity{
+    return new InventoryEntity(InventoryEntityType.Blank);
   }
 }

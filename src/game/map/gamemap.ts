@@ -38,6 +38,7 @@ export class GameMap{
   }
   init_structures(){
     this.add_generator({x: 5, y: 5});
+    this.add_generator({x: 11, y: 4});
   }
   add_generator(coords: Grid.GridCoordinate): StructureTiles.GeneratorTile | undefined{
     this.wire_map.add_source(this.scene, coords);

@@ -179,13 +179,18 @@ export class GridTest extends Scene{
 
     this.time.addEvent({delay: 2000, callback: () => {
       //this.spawn_blue()
-    }})
+    }});
     
     const test_enemy_target = this.map.grid.global_coordinates({x:5, y:5}, true);
     console.log(test_enemy_target);
-    this.critters.set_target(test_enemy_target);
+    //this.critters.set_target(test_enemy_target);
+
+    const target_tiles = this.map.get_generator_tiles();
+    const target_points = target_tiles.map((target) => new Phaser.Math.Vector2(target.x, target.y));
+    this.critters.set_closest_target(target_points);
 
     this.ui.init_weapons(this.player.weapons);
+    this.ui.init_inventory(this.player.inventory);
   }
   change_weapon(index: number){
     this.player.change_weapon(index);
@@ -240,7 +245,7 @@ export class GridTest extends Scene{
     this.critters.update();
     //console.log(this.critters);
 
-    this.critters.player_hit_enemy_test(this.player.projectiles);
+    this.critters.player_hit_enemy_test(this.player, this.player.projectiles);
 
     const generator_tiles = this.map.get_generator_tiles();
     for(const tile of generator_tiles){

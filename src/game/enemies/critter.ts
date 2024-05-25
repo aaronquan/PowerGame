@@ -4,6 +4,7 @@ import * as Death from "./death";
 import * as StructureTiles from "./../structures/map/structuretiles";
 import * as Effects from "./../entity/effects";
 import * as Player from "./../player/player";
+import * as Positions from "./../entity/positions";
 
 export enum CritterType {
   Blue
@@ -14,10 +15,12 @@ export class CritterCollection{
   next_id: number;
 
   // health bars as a global
+  health_bars_shown:boolean;
 
   constructor(){
     this.critters = new Map();
     this.next_id = 0;
+    this.health_bars_shown = true;
   }
   spawn(scene: Phaser.Scene, point: Phaser.Math.Vector2, type: CritterType){
     let critter: Critter | undefined = undefined;
@@ -26,6 +29,11 @@ export class CritterCollection{
         critter = new BlueCritter(scene, point.x, point.y);
     }
     if(critter){
+      if(this.health_bars_shown){
+        critter.display_health_bar();
+      }else{
+        critter.hide_health_bar();
+      }
       this.add_critter(critter);
     }
   }
@@ -57,7 +65,7 @@ export class CritterCollection{
       }
     }
   }
-  player_hit_enemy_test(projectiles:Projectile.ProjectileManager){
+  player_hit_enemy_test(player: Player.Player, projectiles:Projectile.ProjectileManager){
     for(const [id, critter] of this.critters){
       for(const [proj_id, proj] of projectiles.projectiles){
         if(proj.critter_collision(critter)){
@@ -85,8 +93,11 @@ export class CritterCollection{
   enemy_hit_player_test(player:Player.Player){
 
   }
-  set_closest_target(){
-
+  set_closest_target(targets: Phaser.Math.Vector2[]){
+    for(const [id, critter] of this.critters){
+      const distPoint = Positions.closestEntityToPoints(critter, targets);
+      if(distPoint) critter.move_to_target(distPoint.point);
+    }
   }
   set_target(target: Phaser.Math.Vector2){
     for(const [id, critter] of this.critters){
@@ -161,7 +172,7 @@ export class Critter extends Enemy{
   handle_projectile_hit_effect(proj:Projectile.Projectile):Death.EnemyDeathEffect{
     switch(proj.get_type()){
       case Projectile.ProjectileType.Net:
-        proj.destroy();// remove this line!!!!
+        //proj.destroy();// remove this line!!!!
         return {destroy: true};
       case Projectile.ProjectileType.Tazer:
         //const tazer_proj = proj as TazerProjectile;
