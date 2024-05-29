@@ -113,6 +113,9 @@ export class NetProjectile extends MovingProjectile{
     this.damage = 5;
 
   }
+  on_hit(): ProjectileHitEffect{
+    return {destroy: true};
+  }
   critter_collision(critter:Critter):boolean{
     //console.log(this.collision_area);
     return Phaser.Geom.Intersects.CircleToCircle(critter.collision_area, this.collision_area);

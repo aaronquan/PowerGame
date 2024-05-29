@@ -22,16 +22,16 @@ export class GridTestUI extends Phaser.Scene{
   constructor(){
     super('GridTestUI');
     this.weapon_ui = new WeaponUI(this);
+    this.player_inventory = new PlayerInventoryUI(this);
   }
   create(){
     this.test_text = this.add.text(100, 100, 'Hello', {color: 'black'});
     this.power_bar_ui = new PowerBarUI(this);
     this.wires_text = this.add.text(500, 500, 'Wires', {color: 'white'});
     this.info_debug = new InfoDebugUI(this);
-
-    this.player_inventory = new PlayerInventoryUI(this);
   }
   init_inventory(inventory: Inventory.PlayerInventory){
+    console.log(this.player_inventory);
     this.player_inventory.init_inventory(inventory);
   }
   init_weapons(weapon_holder: WeaponHolder){

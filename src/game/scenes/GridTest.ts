@@ -55,7 +55,7 @@ export class GridTest extends Scene{
     this.camera = this.cameras.main;
     this.camera.setBackgroundColor(0x000000);
 
-    this.player = new Player.Player(this, 100, 100);
+    this.player = new Player.Player(this, 100, 100, this.ui.player_inventory);
     this.player.set_power_bar(this.map.power_bar);
     this.player.setDepth(1);
     this.camera.centerOn(this.player.x, this.player.y);
@@ -90,8 +90,13 @@ export class GridTest extends Scene{
       const world_point = this.camera.getWorldPoint(pointer.x, pointer.y);
       const info = this.map.get_info(world_point);
       this.ui.update_display_info(info);
+      const inventory_grid_coords = this.player.inventory.mouse_over(pointer);
+      //console.log(inventory_grid_coords);
     });
     this.input.on('pointerdown', (pointer:Phaser.Input.Pointer) => {
+
+      this.player.inventory.mouse_down(pointer);
+
       const world_point = this.camera.getWorldPoint(pointer.x, pointer.y);
       if(this.key_map.is_key_down(Phaser.Input.Keyboard.KeyCodes.CTRL)){
         //place turret
@@ -114,6 +119,11 @@ export class GridTest extends Scene{
         }
       }
     });
+
+    this.input.on('pointerup', (pointer:Phaser.Input.Pointer) => {
+      this.player.inventory.mouse_up(pointer);
+    });
+    
     this.input.keyboard?.on('keydown', (e:KeyboardEvent) => {
       const key = e.key;
       if(key == '1'){
@@ -126,7 +136,7 @@ export class GridTest extends Scene{
         this.change_weapon(3);
       }
       else if(key == 'p'){
-        console.log(this.critters.critters);
+        console.log(this.player.inventory);
       }
       else if(key == 'q'){
         if(this.player.weapons.get_current_type() === Weapons.WeaponTypes.Wire){
@@ -166,6 +176,9 @@ export class GridTest extends Scene{
       else if(key == 'z'){
         this.spawn_blue();
       }
+      else if(key == 'i'){
+        this.ui.player_inventory.toggle_visible();
+      }
     });
     
     this.string_map = [];
@@ -191,6 +204,7 @@ export class GridTest extends Scene{
 
     this.ui.init_weapons(this.player.weapons);
     this.ui.init_inventory(this.player.inventory);
+    this.player.init_inventory()
   }
   change_weapon(index: number){
     this.player.change_weapon(index);
@@ -213,8 +227,9 @@ export class GridTest extends Scene{
   }
   spawn_blue(){
     this.critters.spawn(this, new Phaser.Math.Vector2(400, 400), Critter.CritterType.Blue);
-    const test_enemy_target = this.map.grid.global_coordinates({x:5, y:5});
-    this.critters.set_target(test_enemy_target);
+    const target_tiles = this.map.get_generator_tiles();
+    const target_points = target_tiles.map((target) => new Phaser.Math.Vector2(target.x, target.y));
+    this.critters.set_closest_target(target_points);
     /*this.time.addEvent({delay: 2000, callback: () => {
       this.spawn_blue()
     }})*/

@@ -1,10 +1,13 @@
 import * as Projectile from "../projectiles/projectile";
 import { Enemy } from "./enemy";
-import * as Death from "./death";
 import * as StructureTiles from "./../structures/map/structuretiles";
 import * as Effects from "./../entity/effects";
 import * as Player from "./../player/player";
 import * as Positions from "./../entity/positions";
+
+import * as Entity from "./../entity/entity";
+import * as Sprites from "../graphics/sprites";
+import * as Critters from "../entity/inventory/critters";
 
 export enum CritterType {
   Blue
@@ -20,7 +23,7 @@ export class CritterCollection{
   constructor(){
     this.critters = new Map();
     this.next_id = 0;
-    this.health_bars_shown = true;
+    this.health_bars_shown = false;
   }
   spawn(scene: Phaser.Scene, point: Phaser.Math.Vector2, type: CritterType){
     let critter: Critter | undefined = undefined;
@@ -69,20 +72,28 @@ export class CritterCollection{
     for(const [id, critter] of this.critters){
       for(const [proj_id, proj] of projectiles.projectiles){
         if(proj.critter_collision(critter)){
-          const effect = critter.handle_projectile_hit_effect(proj);
-          if(effect.destroy){
+          const effect:Effects.ProjectileCritterHitEffect = critter.handle_projectile_hit_effect(proj);
+          if(effect.capture){
+            const new_inv_critter = critter.get_inventory();
+            player.inventory.add_entity(new_inv_critter);
+          }
+          if(effect.destroy_critter){
             this.remove_critter(id);
           }
-          const proj_effect = proj.on_hit();
-          if(proj_effect.destroy){
+          if(effect.destroy_projectile){
             projectiles.delete_projectile(proj_id);
           }
+          //use somewhere else
+          //const proj_effect = proj.on_hit();
+          //if(proj_effect.destroy){
+          //  projectiles.delete_projectile(proj_id);
+          //}
         }
       }
     }
   }
   remove_critter(index: number){
-    this.critters.get(index)?.destroy();
+    this.critters.get(index)?.die();
     this.critters.delete(index);
   }
   remove_critters(indexs: number[]){
@@ -110,8 +121,21 @@ export class CritterCollection{
     }
   }
   toggle_health_bars(){
+    this.health_bars_shown = !this.health_bars_shown;
+    if(this.health_bars_shown){
+      this.show_health_bars();
+    }else{
+      this.hide_health_bars();
+    }
+  }
+  show_health_bars(){
     for(const [id, critter] of this.critters){
-      critter.toggle_health_bar();
+      critter.display_health_bar();
+    }
+  }
+  hide_health_bars(){
+    for(const [id, critter] of this.critters){
+      critter.hide_health_bar();
     }
   }
 }
@@ -130,7 +154,7 @@ export class Critter extends Enemy{
     const tile_id = tile.get_id();
     switch(tile_id){
       case StructureTiles.StructureType.Generator:
-        
+        tile.on_critter_collision(this);
         break;
     }
     return {destroy: true};
@@ -161,7 +185,6 @@ export class Critter extends Enemy{
     vec.scale(this.speed);
     this.setVelocity(vec.x, vec.y);
   }
-  
   update(){
     this.collision_area = new Phaser.Geom.Circle(this.x, this.y, this.width/2);
     this.health_bar.update_position(this.x, this.y);
@@ -169,34 +192,39 @@ export class Critter extends Enemy{
   get_position(): Phaser.Math.Vector2{
     return new Phaser.Math.Vector2(this.x, this.y);
   }
-  handle_projectile_hit_effect(proj:Projectile.Projectile):Death.EnemyDeathEffect{
+  handle_projectile_hit_effect(proj:Projectile.Projectile):Effects.ProjectileCritterHitEffect{
     switch(proj.get_type()){
       case Projectile.ProjectileType.Net:
-        //proj.destroy();// remove this line!!!!
-        return {destroy: true};
+        return {destroy_critter: true, destroy_projectile: true, capture: true};
       case Projectile.ProjectileType.Tazer:
         //const tazer_proj = proj as TazerProjectile;
         this.take_damage(proj.damage);
         proj.update_hit_graphics(this.get_position());
-        console.log('tazer hit');
         const destroy = this.take_damage(proj.damage);
-        return {destroy: destroy};
+        return {destroy_critter: destroy};
       case Projectile.ProjectileType.Ball:
         proj.destroy();
-        return {destroy: this.take_damage(proj.damage)};
+        return {destroy_critter: this.take_damage(proj.damage), destroy_projectile: true};
     }
-    return {destroy: false};
+    return {capture: false};
   }
   move(x:number, y:number){
     this.setX(this.x+x);
     this.setY(this.y+y);
   }
+  get_inventory(): Critters.CritterInventory{
+    return Critters.CritterInventory.new_blank();
+  }
 }
 export class BlueCritter extends Critter{
+  static texture_name = "blue";
   constructor(scene: Phaser.Scene, x:number, y:number){
-    super(scene, x, y, 'blue');
+    super(scene, x, y, BlueCritter.texture_name);
     this.max_health = 50;
     this.health = 50;
+  }
+  get_inventory(): Critters.CritterInventory {
+    return new Critters.BlueCritterInventory();
   }
 }
 

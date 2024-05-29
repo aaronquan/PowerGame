@@ -1,5 +1,6 @@
 import { DisplaySprite } from "../../graphics/sprites";
 import { GridCoordinate } from "../../map/grid";
+import * as Inventory from "./../../entity/inventory/inventory";
 
 export enum WireId {
   Empty, Vertical, Horizontal, Cross, Source
@@ -214,5 +215,14 @@ export class WirePowerMap{
   }
   has_power(coord:GridCoordinate):boolean{
     return this.power_map[coord.y][coord.x];
+  }
+}
+
+export class WireInventory extends Inventory.InventoryEntity{
+  constructor(start: number=10){
+    super(Inventory.InventoryEntityType.Wire, Inventory.InventoryEntityId.Wire);
+    this.icon_texture = 'wireplacer';
+    this.max_stack = 10;
+    this.stack_count = (start > 10 || start < 0) ? 10 : start;
   }
 }

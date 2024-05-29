@@ -6,6 +6,8 @@ import * as Projectile from "../projectiles/projectile";
 import * as Power from "./../structures/power/power";
 import * as GameMap from './../map/gamemap';
 import * as Inventory from "./inventory";
+import * as Wire from "./../structures/power/wire";
+import { PlayerInventoryUI } from "../ui/player_inventory";
 
 export class Player extends Phaser.Physics.Arcade.Sprite{
   move_speed:number;
@@ -26,7 +28,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite{
 
   inventory: Inventory.PlayerInventory;
 
-  constructor(scene: Phaser.Scene, x:number, y:number){
+  constructor(scene: Phaser.Scene, x:number, y:number, inventory_ui:PlayerInventoryUI){
     super(scene, x, y, 'player');
     scene.physics.add.existing(this);
     scene.sys.displayList.add(this);
@@ -61,8 +63,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite{
 
     this.immunity_duration = 1000;
 
-    this.inventory = new Inventory.PlayerInventory(5, 5);
-    //this.power_bar = new PowerBar(100, 50);
+    this.inventory = new Inventory.PlayerInventory(5, 5, inventory_ui);
+  }
+  init_inventory(){
+    //to call after ui inventory is set
+    const wire_entity = new Wire.WireInventory(this.n_wires);
+    this.inventory.add_entity(wire_entity);
   }
   set_power_bar(power_bar: Power.PowerBar){
     this.power_bar = power_bar

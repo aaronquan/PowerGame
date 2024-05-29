@@ -63,6 +63,7 @@ export class GameMap{
       if(orth_distance <= 3){
         const has_added_wire = this.wire_map.add_wire(this.scene, wire_type, mouse_grid_coords);
         if(has_added_wire){
+          //player.inventory.find_first_free_entity_id // remove wire from inventory
           player.n_wires--;
         }
         return has_added_wire;

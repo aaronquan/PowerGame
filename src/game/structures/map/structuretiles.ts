@@ -38,8 +38,10 @@ export class RedHighlight extends StructureTile{
 }
 
 export class GeneratorTile extends StructureTile{
+  health: number;
   constructor(scene:Phaser.Scene, gx:number, gy:number){
     super(scene, gx, gy, 'generator');
+    this.health = 1;
   }
   get_id():StructureType{
     return StructureType.Default;
@@ -47,6 +49,10 @@ export class GeneratorTile extends StructureTile{
   on_critter_collision(critter: Critter.Critter){
     console.log("collision critter generator");
     console.log(critter);
+    this.health -= critter.damage;
+    if(this.health < 0){
+      console.log("dies");
+    }
   }
 }
 

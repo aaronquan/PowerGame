@@ -1,5 +1,5 @@
 import * as Sprites from "../graphics/sprites";
-
+import * as InventoryUI from "./../ui/player_inventory";
 
 export class LivingMovingEntity extends Sprites.DisplayPhysicsSprite{
   max_health: number;
@@ -12,12 +12,14 @@ export class LivingMovingEntity extends Sprites.DisplayPhysicsSprite{
     //this.show_health_bar = false;
     this.health_bar = new HealthBar(this.scene);
   }
+  die(){
+    this.destroy();
+    this.health_bar.destroy();
+    console.log("destroy health bar");
+  }
   take_damage(damage:number):boolean{
     this.health -= damage;
     if(this.health < 0){
-      this.destroy();
-      this.health_bar.destroy();
-      console.log("destroy health bar");
       return true;
     }
     this.health_bar.update_health(this.max_health, this.health);
@@ -35,13 +37,12 @@ export class LivingMovingEntity extends Sprites.DisplayPhysicsSprite{
     this.health_bar.hide();
   }
   toggle_health_bar(){
-    //this.health_bar.visible = !this.health_bar.visible;
+    this.health_bar.visible = !this.health_bar.visible;
     if(!this.health_bar.visible){
       this.display_health_bar();
     }else{
       this.hide_health_bar();
     }
-    //this.show_health_bar = !this.show_health_bar;
   }
 }
 
@@ -101,22 +102,5 @@ class HealthBar{
     this.health_bar.setX(this.background.x); 
     this.health_bar.setY(this.background.y);
     this.health_bar.setVisible(this.visible)
-  }
-}
-
-export enum InventoryEntityType {
-  Blank, Weapon, Critter
-}
-
-export class InventoryEntity{
-  type:InventoryEntityType;
-  constructor(type: InventoryEntityType){
-    this.type = type;
-  }
-  is_blank(): boolean{
-    return this.type == InventoryEntityType.Blank;
-  }
-  static new_blank(): InventoryEntity{
-    return new InventoryEntity(InventoryEntityType.Blank);
   }
 }

@@ -85,20 +85,15 @@ export class GridMap{
   }
   fill_walls(scene: Phaser.Scene){
     this.walls = scene.add.group();
-    //const x_offset = this.cell_width/2;
-    //const y_offset = this.cell_height/2;
+
     for(let j = 0; j < this.height; j++){
       for(let i = 0; i < this.width; i++){
         if(i == 0 || j == 0 || i == this.width - 1 || j == this.height - 1){
           const new_wall = new MapTile.MapWall(scene, i, j);
-          //const new_wall = scene.physics.add.image(x_offset+i*this.cell_width, y_offset+j*this.cell_height, 'wall');
           this.object_map[j][i] = new_wall;
           this.walls.add(new_wall);
-          //new_wall.setImmovable();
-          
         }else{
           const new_floor = new MapTile.MapFloor(scene, i, j);
-          //scene.add.image(x_offset+i*this.cell_width, y_offset+j*this.cell_height, 'grey')
           this.object_map[j][i] = new_floor;
         }
         const x_scale = this.cell_width/32;
@@ -141,6 +136,10 @@ export type GridCoordinate = {
 
 export type LightSquare = GridCoordinate & {
   distance_sq: number
+}
+
+export function grid_coordinate_equals(c1: GridCoordinate, c2: GridCoordinate): boolean{
+  return c1.x == c2.x && c1.y == c2.y;
 }
 
 export function get_grid_positions(coord:GridCoordinate, grid_diff:GridDifference): GridCoordinate[]{
