@@ -1,6 +1,4 @@
 import * as Sprites from "../../graphics/sprites";
-import * as Critters from "./critters";
-import * as Wire from "./../../structures/power/wire";
 
 export enum InventoryEntityType {
   Blank, Weapon, Critter, Wire
@@ -28,6 +26,9 @@ export class InventoryEntity{
   is_max_stack(): boolean{
     return this.stack_count === this.max_stack;
   }
+  is_same_id(entity: InventoryEntity): boolean{
+    return this.id == entity.id;
+  }
 
   //returns remainder
   add_to_stack(n:number): number{
@@ -43,7 +44,7 @@ export class InventoryEntity{
     return this.type == InventoryEntityType.Blank;
   }
   static new_blank(): InventoryEntity{
-    return new InventoryEntity(InventoryEntityType.Blank, InventoryEntityId.Blank);
+    return new BlankInventoryEntity();
   }
   new_icon(scene: Phaser.Scene, x: number, y: number): Sprites.DisplayImage | undefined{
     if(this.icon_texture){
@@ -52,15 +53,22 @@ export class InventoryEntity{
     }
     return undefined;
   }
+  can_add_stack(n:number): boolean{
+    return n+this.stack_count <= this.max_stack;
+  }
+  is_void():boolean{
+    return this.stack_count <= 0;
+  }
+  remove_stack(n: number):boolean{
+    this.stack_count -= n;
+    return this.stack_count <= 0
+  }
 }
 
-export function entity_inventory_from_id(id:InventoryEntityId): InventoryEntity{
-  switch(id){
-    case InventoryEntityId.Blank:
-      return InventoryEntity.new_blank();
-    case InventoryEntityId.BlueCritter:
-      return new Critters.BlueCritterInventory();
-    case InventoryEntityId.Wire:
-      return new Wire.WireInventory();
+export class BlankInventoryEntity extends InventoryEntity{
+  constructor(){
+    super(InventoryEntityType.Blank, InventoryEntityId.Blank);
+    this.max_stack = 0;
+    this.stack_count = 0;
   }
 }

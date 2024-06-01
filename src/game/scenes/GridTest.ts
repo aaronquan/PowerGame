@@ -94,7 +94,6 @@ export class GridTest extends Scene{
       //console.log(inventory_grid_coords);
     });
     this.input.on('pointerdown', (pointer:Phaser.Input.Pointer) => {
-
       this.player.inventory.mouse_down(pointer);
 
       const world_point = this.camera.getWorldPoint(pointer.x, pointer.y);
@@ -293,6 +292,8 @@ export class GridTest extends Scene{
 
     this.turrets.update_aim_turrets(this.critters);
     this.turrets.update_turret_shooting(this.player.projectiles);
+
+    this.map.update_pickups(this.player);
   }
 }
 

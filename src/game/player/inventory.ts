@@ -1,4 +1,5 @@
 import * as Inventory from "./../entity/inventory/inventory";
+import * as AllInventory from "./../entity/inventory/all_inventory";
 import * as Grid from "./../map/grid";
 import { PlayerInventoryUI } from "../ui/player_inventory";
 
@@ -8,7 +9,10 @@ export type SwapInventory = {
 }
 
 export type InventoryAction = {
+  select?: Grid.GridCoordinate;
   swap?: SwapInventory;
+  place_single?: Grid.GridCoordinate;
+  stack?: boolean;
 }
 
 export class PlayerInventory{
@@ -18,6 +22,7 @@ export class PlayerInventory{
   ui: PlayerInventoryUI;
   entity_counts: Map<Inventory.InventoryEntityId, number>;
   available: Grid.GridCoordinate | undefined;
+  selected_coord: Grid.GridCoordinate | undefined;
   constructor(width: number, height:number, ui: PlayerInventoryUI){
     this.width = width; this.height = height;
     this.inventory = [];
@@ -31,24 +36,93 @@ export class PlayerInventory{
     this.ui = ui;
     this.entity_counts = new Map();
     this.available = {x: 0, y: 0};
+    this.selected_coord = undefined;
   }
-  mouse_over(position: Phaser.Math.Vector2 | Phaser.Input.Pointer): Grid.GridCoordinate | undefined{
-    const inventory_grid_coords = this.ui.mouse_over(position, this.width, this.height);
+  mouse_over(pointer: Phaser.Input.Pointer): Grid.GridCoordinate | undefined{
+    const inventory_grid_coords = this.ui.mouse_over(pointer, this.width, this.height);
     this.ui.hover_on(inventory_grid_coords, this.height);
     return inventory_grid_coords;
   }
-  mouse_down(position: Phaser.Math.Vector2 | Phaser.Input.Pointer){
-    const inventory_grid_coords = this.ui.mouse_over(position, this.width, this.height);
-    this.ui.mouse_down(inventory_grid_coords, this.height);
-  }
-  mouse_up(position: Phaser.Math.Vector2 | Phaser.Input.Pointer){
-    const inventory_grid_coords = this.ui.mouse_over(position, this.width, this.height);
-    const action = this.ui.mouse_up(inventory_grid_coords, this.height);
-    if(action.swap){
-      this.swap(action.swap.new, action.swap.old);
+  mouse_down(pointer: Phaser.Input.Pointer){
+    const inventory_grid_coords = this.ui.mouse_over(pointer, this.width, this.height);
+
+    if(pointer.rightButtonDown()){
+      if(this.selected_coord && inventory_grid_coords){
+        const pointer_entity = this.get_entity_coord(inventory_grid_coords);
+        const selected_entity = this.get_entity_coord(this.selected_coord);
+        const action = this.ui.mouse_right_down(inventory_grid_coords, this.height, selected_entity, pointer_entity);
+        if(action.place_single){
+          this.remove_from_entity_coord(this.selected_coord, 1);
+          this.add_entity_coord(inventory_grid_coords, 1, selected_entity.id);
+        }
+      }
+    }else if(pointer.leftButtonDown()){
+      const action = this.ui.mouse_left_down(inventory_grid_coords, this.height);
+      if(action.select){
+        this.selected_coord = action.select;
+      }
     }
   }
-
+  mouse_up(pointer: Phaser.Input.Pointer){
+    const inventory_grid_coords = this.ui.mouse_over(pointer, this.width, this.height);
+    if(pointer.leftButtonReleased()){
+      if(this.selected_coord && inventory_grid_coords){
+        const pointer_entity = this.get_entity_coord(inventory_grid_coords);
+        const selected_entity = this.get_entity_coord(this.selected_coord);
+        const action = this.ui.mouse_left_up(inventory_grid_coords, this.height, selected_entity, pointer_entity);
+        if(action.swap){
+          this.swap(action.swap.new, action.swap.old);
+        }
+        if(action.stack){
+          this.stack(inventory_grid_coords, this.selected_coord);
+        }
+        this.selected_coord = undefined;
+      }
+    }else{
+      
+    }
+  }
+  get_entity_coord(coord:Grid.GridCoordinate): Inventory.InventoryEntity{
+    return this.inventory[coord.y][coord.x];
+  }
+  remove_from_entity_coord(coord:Grid.GridCoordinate, n: number){
+    const entity = this.get_entity_coord(coord);
+    const is_empty = entity.remove_stack(n);
+    if(is_empty){
+      this.add_blank_coord(coord);
+    }
+    
+  }
+  add_blank_coord(coord: Grid.GridCoordinate){
+    this.inventory[coord.y][coord.x] = Inventory.InventoryEntity.new_blank();
+    this.find_available();
+  }
+  add_entity_coord(coord: Grid.GridCoordinate, n: number, id: Inventory.InventoryEntityId): number{
+    if(id === Inventory.InventoryEntityId.Blank){
+      this.add_blank_coord(coord);
+    }else{
+      const current_entity = this.get_entity_coord(coord);
+      if(current_entity.is_blank()){
+        this.inventory[coord.y][coord.x] = AllInventory.entity_inventory_from_id(id);
+        const rem = this.inventory[coord.y][coord.x].add_to_stack(n-1);
+        return rem;
+      }else{
+        const rem = current_entity.add_to_stack(n);
+        return rem;
+      }
+    }
+    return n;
+  }
+  stack(to:Grid.GridCoordinate, from: Grid.GridCoordinate){
+    const to_entity = this.inventory[to.y][to.x];
+    const from_entity = this.inventory[from.y][from.x];
+    if(to_entity.can_add_stack(from_entity.stack_count)){
+      to_entity.add_to_stack(from_entity.stack_count);
+      this.add_blank_coord(from);
+    }else{
+      console.log("full stack");
+    }
+  }
   swap(c1:Grid.GridCoordinate, c2: Grid.GridCoordinate): void{
     const tmp = this.inventory[c1.y][c1.x];
     this.inventory[c1.y][c1.x] = this.inventory[c2.y][c2.x];
@@ -81,7 +155,6 @@ export class PlayerInventory{
     return undefined;
   }
   find_first_free_entity_id(id: Inventory.InventoryEntityId): Grid.GridCoordinate | undefined{
-    //const found: Grid.GridCoordinate | undefined = undefined;
     for(let j = 0; j < this.height; j++){
       for(let i = 0; i < this.width; i++){
         const ent = this.inventory[j][i];
@@ -92,7 +165,18 @@ export class PlayerInventory{
     }
     return undefined;
   }
-  find_entity_count(id: Inventory.InventoryEntityId): number{
+  find_first_has_entity_id(id: Inventory.InventoryEntityId): Grid.GridCoordinate | undefined{
+    for(let j = 0; j < this.height; j++){
+      for(let i = 0; i < this.width; i++){
+        const ent = this.inventory[j][i];
+        if(ent.id == id){
+          return {x: i, y: j};
+        }
+      }
+    }
+    return undefined;
+  }
+  find_entity_id_count(id: Inventory.InventoryEntityId): number{
     if(this.entity_counts.has(id)){
       return this.entity_counts.get(id)!;
     }
@@ -119,7 +203,7 @@ export class PlayerInventory{
       this.inventory[this.available.y][this.available.x] = entity;
       this.ui.set_bag_cell(this.available, entity, this.height);
       this.next_available();
-
+      this.#add_entity_counts(entity.id, n);
       return true;
     }
     return false;
@@ -128,10 +212,11 @@ export class PlayerInventory{
   #add_entity_counts(id: Inventory.InventoryEntityId, n:number){
     if(this.entity_counts.has(id)){
       const new_count = this.entity_counts.get(id)! + n;
-      if(new_count >=  0)this.entity_counts.set(id, new_count);
-    }else{
-      if(n >= 0) this.entity_counts.set(id, n);
+      if(new_count >=  0) this.entity_counts.set(id, new_count);
+      return new_count;
     }
+    if(n >= 0) this.entity_counts.set(id, n);
+    return n;
   }
   add_entity_id(id: Inventory.InventoryEntityId, n:number=1){
     const first_free_id = this.find_first_free_entity_id(id);
@@ -149,21 +234,27 @@ export class PlayerInventory{
       return true;
     }
     if(this.available){
-      const entity = Inventory.entity_inventory_from_id(id);
+      const entity = AllInventory.entity_inventory_from_id(id);
       this.inventory[this.available.y][this.available.x] = entity;
       this.ui.set_bag_cell(this.available, entity, this.height);
       this.next_available();
-
+      this.#add_entity_counts(entity.id, n);
       return true;
     }
     return false;
   }
   remove_entity_id(id: Inventory.InventoryEntityId, n:number=1){
-    const first_free = this.find_first_free_entity_id(id);
+    const first_free = this.find_first_has_entity_id(id);
     if(first_free){
-
-
-      this.#add_entity_counts(id, -n);
+      const new_count = this.#add_entity_counts(id, -n);
+      console.log(new_count);
+      if(new_count > 0){
+        this.inventory[first_free.y][first_free.x].add_to_stack(-n);
+        this.ui.update_stack(first_free, new_count, this.height);
+      }else{
+        this.ui.clear_cell(first_free, this.height);
+        this.add_blank_coord(first_free);
+      }
     }
 
   }

@@ -18,7 +18,7 @@ export class GridTestUI extends Phaser.Scene{
 
   player_inventory: PlayerInventoryUI;
 
-  wires_text: Phaser.GameObjects.Text;
+  //wires_text: Phaser.GameObjects.Text;
   constructor(){
     super('GridTestUI');
     this.weapon_ui = new WeaponUI(this);
@@ -27,7 +27,7 @@ export class GridTestUI extends Phaser.Scene{
   create(){
     this.test_text = this.add.text(100, 100, 'Hello', {color: 'black'});
     this.power_bar_ui = new PowerBarUI(this);
-    this.wires_text = this.add.text(500, 500, 'Wires', {color: 'white'});
+    //this.wires_text = this.add.text(500, 500, 'Wires', {color: 'white'});
     this.info_debug = new InfoDebugUI(this);
   }
   init_inventory(inventory: Inventory.PlayerInventory){
@@ -41,7 +41,7 @@ export class GridTestUI extends Phaser.Scene{
     //this.weapon_ui.update(weapon_holder);
   }
   update_player_stats(player:Player){
-    this.wires_text.setText('Wires: '+player.n_wires.toString());
+    //this.wires_text.setText('Wires: '+player.n_wires.toString());
   }
 
   update_power_bar(power_bar:Power.PowerBar){

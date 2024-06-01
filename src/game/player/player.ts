@@ -5,9 +5,12 @@ import * as Projectile from "../projectiles/projectile";
 
 import * as Power from "./../structures/power/power";
 import * as GameMap from './../map/gamemap';
-import * as Inventory from "./inventory";
+import * as PlayerInventory from "./inventory";
+import * as Inventory from "./../entity/inventory/inventory";
 import * as Wire from "./../structures/power/wire";
 import { PlayerInventoryUI } from "../ui/player_inventory";
+
+import * as Pickup from "../entity/pickup/pickup";
 
 export class Player extends Phaser.Physics.Arcade.Sprite{
   move_speed:number;
@@ -24,9 +27,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite{
   immunity_duration: number;
   power_bar: Power.PowerBar;
 
-  n_wires: number;
+  //n_wires: number;
 
-  inventory: Inventory.PlayerInventory;
+  inventory: PlayerInventory.PlayerInventory;
 
   constructor(scene: Phaser.Scene, x:number, y:number, inventory_ui:PlayerInventoryUI){
     super(scene, x, y, 'player');
@@ -40,7 +43,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite{
     this.dist_map = [];
     this.rotate_angle = 0;
 
-    this.n_wires = 10;
+    //this.n_wires = 10;
 
     this.weapons = new Weapons.WeaponHolder(4);
 
@@ -63,12 +66,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite{
 
     this.immunity_duration = 1000;
 
-    this.inventory = new Inventory.PlayerInventory(5, 5, inventory_ui);
+    this.inventory = new PlayerInventory.PlayerInventory(5, 5, inventory_ui);
   }
   init_inventory(){
     //to call after ui inventory is set
-    const wire_entity = new Wire.WireInventory(this.n_wires);
-    this.inventory.add_entity(wire_entity);
+    //const wire_entity = new Wire.WireInventory(this.n_wires);
+    //this.inventory.add_entity(wire_entity);
   }
   set_power_bar(power_bar: Power.PowerBar){
     this.power_bar = power_bar
@@ -163,6 +166,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite{
     }
     grid_diffs.sort((a, b) => a.distance_sq - b.distance_sq);
     return grid_diffs;
+  }
+  add_inventory(entity_id: Inventory.InventoryEntityId, count: number){
+    this.inventory.add_entity_id(entity_id, count);
   }
 }
 

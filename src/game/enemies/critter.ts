@@ -242,8 +242,7 @@ export class TestEnemy extends Enemy{
     g.fillStyle(0xff0000, 0.3);
     g.fillCircle(this.collision_area.x, this.collision_area.y, this.collision_area.radius);
   }
-  collision(tri: Phaser.Geom.Triangle){
-    //console.log(this.body);
+  collision(tri: Phaser.Geom.Triangle):boolean{
     return Phaser.Geom.Intersects.TriangleToCircle(tri, this.collision_area);
   }
   update(){

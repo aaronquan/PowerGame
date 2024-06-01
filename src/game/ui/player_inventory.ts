@@ -1,13 +1,12 @@
 import * as Inventory from "./../player/inventory";
 import * as Grid from "./../map/grid";
-import * as Entity from "./../entity/entity";
+import * as InventoryEntity from "./../entity/inventory/inventory";
 import * as Sprites from "./../graphics/sprites";
 
 export class BagEntityIcon{
   background: Phaser.GameObjects.Graphics;
   icon: Sprites.DisplayImage | undefined;
   stack_count_text: Phaser.GameObjects.Text;
-
 
   scene: Phaser.Scene;
 
@@ -36,15 +35,21 @@ export class BagEntityIcon{
   is_none(): boolean{
     return this.icon == undefined;
   }
-  set_entity(entity: Entity.InventoryEntity, x: number, y: number, visible: boolean){
+  set_entity(entity: InventoryEntity.InventoryEntity, x: number, y: number, visible: boolean){
     this.icon?.destroy();
     if(entity.icon_texture){
       this.icon = new Sprites.DisplayImage(this.scene, x, y, entity.icon_texture);
       this.icon.setDepth(1);
       this.icon.setVisible(visible);
-      this.stack_count_text.setText(entity.stack_count.toString());
-      this.stack_count_text.setVisible(visible);
+      if(entity.stack_count > 0){
+        this.stack_count_text.setText(entity.stack_count.toString());
+        this.stack_count_text.setVisible(visible);
+      }else{
+        this.stack_count_text.setVisible(false);
+      }
 
+    }else{
+      this.stack_count_text.setVisible(false);
     }
   }
   update_stack(n:number){
@@ -87,10 +92,6 @@ export class BagEntityIcon{
     this.background.setVisible(visible);
     this.icon?.setVisible(visible);
     this.stack_count_text.setVisible(visible);
-  }
-  destroy(){
-    //this.icon?.destroy();
-    //this.stack_count_text.setText("");
   }
 }
 
@@ -172,51 +173,105 @@ export class PlayerInventoryUI{
 
     this.set_visible(this.visible);
   }
-  set_bag_cell(coord: Grid.GridCoordinate, entity: Entity.InventoryEntity, height: number){
-    console.log("setting cell: "+coord.x.toString()+" "+ coord.y.toString())
+  clear_cell(coord: Grid.GridCoordinate, height: number){
+    const bag_entity = InventoryEntity.InventoryEntity.new_blank();
+    this.set_bag_cell(coord, bag_entity, height);
+  }
+  set_bag_cell(coord: Grid.GridCoordinate, entity: InventoryEntity.InventoryEntity, height: number): BagEntityIcon {
+    console.log("setting cell: "+coord.x.toString()+" "+ coord.y.toString());
     const position = this.get_cell_position_from_coords(coord, true);
     //const icon = entity.new_icon(this.scene, position.x, position.y);
     //icon?.setVisible(this.visible);
     //icon?.setDepth(1);
     const id = this.get_grid_index(coord, height);
-    this.bag_entities[id]?.destroy();
-    this.bag_entities[id].set_entity(entity, position.x, position.y, this.visible);
-
-    //this.bag_inventory_icons[id]?.destroy();
-    //this.bag_inventory_icons[id] = icon;
+    //this.bag_entities[id]?.destroy();
+    if(entity.is_blank()){
+      this.bag_entities[id].empty_entity();
+    }else{
+      this.bag_entities[id].set_entity(entity, position.x, position.y, this.visible);
+    }
+    return this.bag_entities[id];
   }
-  mouse_down(coord: Grid.GridCoordinate | undefined, height: number){
+  mouse_left_down(coord: Grid.GridCoordinate | undefined, height: number): Inventory.InventoryAction{
     if(coord){
       const id = this.get_grid_index(coord, height);
       if(!this.bag_entities[id].is_none()){
         //this.bag_entities[id]
         this.selected_entity = coord;
+
+        return {select: coord};
       }
     }
+    return {};
   }
-  mouse_up(coord: Grid.GridCoordinate | undefined, height: number): Inventory.InventoryAction{
+  mouse_right_down(coord: Grid.GridCoordinate | undefined, height: number, 
+    selected_entity: InventoryEntity.InventoryEntity, mouse_over_entity: InventoryEntity.InventoryEntity
+  ): Inventory.InventoryAction{
+    if(coord){
+      const id = this.get_grid_index(coord, height);
+      const update_selected_icon = () => {
+        const selected_icon_id = this.get_grid_index(this.selected_entity!, height);
+        if(selected_entity.stack_count === 1){
+          this.bag_entities[selected_icon_id].empty_entity();
+          this.selected_entity = undefined;
+        }else{
+          this.bag_entities[selected_icon_id].update_stack(selected_entity.stack_count-1);
+        }
+      }
+      if(mouse_over_entity.is_blank()){
+        const entity_icon = this.set_bag_cell(coord, selected_entity, height);
+        entity_icon.update_stack(1);
+        update_selected_icon();
+        return {place_single: coord};
+      }else if(selected_entity.is_same_id(mouse_over_entity)){
+        if(mouse_over_entity.can_add_stack(1)){
+          const id = this.get_grid_index(coord, height);
+          this.bag_entities[id].update_stack(mouse_over_entity.stack_count+1);
+          update_selected_icon();
+          return {place_single: coord};
+        }
+      }
+    }
+
+    return {};
+  }
+  mouse_left_up(coord: Grid.GridCoordinate | undefined, height: number, 
+    selected_entity: InventoryEntity.InventoryEntity, mouse_over_entity: InventoryEntity.InventoryEntity
+  ): Inventory.InventoryAction{
     const action:Inventory.InventoryAction = {};
     if(this.selected_entity !== undefined){
       const id = this.get_grid_index(this.selected_entity, height);
       if(coord && !Grid.grid_coordinate_equals(this.selected_entity, coord)){
-        //this.bag_entities[id].destroy();
         const new_id = this.get_grid_index(coord, height);
-        const temp = this.bag_entities[id];
-        this.bag_entities[id] = this.bag_entities[new_id];
-        this.bag_entities[new_id] = temp;
+        if(selected_entity.is_same_id(mouse_over_entity)){
 
-        const old_id_position = this.get_cell_position_from_coords(this.selected_entity, false);
-        this.bag_entities[id].hover_off(old_id_position.x, old_id_position.y, this.slot_width, this.slot_height);
-        this.bag_entities[id].set_position(old_id_position.x, old_id_position.y, this.slot_width, this.slot_height);
+          if(mouse_over_entity.can_add_stack(selected_entity.stack_count)){
+            this.bag_entities[new_id].update_stack(mouse_over_entity.stack_count+selected_entity.stack_count);
+            const position = this.get_cell_position_from_coords(this.selected_entity, false);
+            this.bag_entities[id].set_position(position.x, position.y, this.slot_width, this.slot_height);
+            this.clear_cell(this.selected_entity, height);
+          }else{
+            const position = this.get_cell_position_from_coords(this.selected_entity, false);
+            this.bag_entities[id].set_position(position.x, position.y, this.slot_width, this.slot_height);
+          }
+          //need to implement case where stack goes over limit, rest returns to selected entity coords
+          action.stack = true;
+        }else{
+          const temp = this.bag_entities[id];
+          this.bag_entities[id] = this.bag_entities[new_id];
+          this.bag_entities[new_id] = temp;
 
-        //const new_centre_position = this.get_cell_position_from_coords(coord, true);
-        const new_position = this.get_cell_position_from_coords(coord, false);
-        this.bag_entities[new_id].set_position(new_position.x, new_position.y, this.slot_width, this.slot_height);
+          const old_id_position = this.get_cell_position_from_coords(this.selected_entity, false);
+          this.bag_entities[id].hover_off(old_id_position.x, old_id_position.y, this.slot_width, this.slot_height);
+          this.bag_entities[id].set_position(old_id_position.x, old_id_position.y, this.slot_width, this.slot_height);
 
-        action.swap = {new: this.selected_entity, old: coord};
+          const new_position = this.get_cell_position_from_coords(coord, false);
+          this.bag_entities[new_id].set_position(new_position.x, new_position.y, this.slot_width, this.slot_height);
+
+          action.swap = {new: this.selected_entity, old: coord};
+        }
       }else{
         const position = this.get_cell_position_from_coords(this.selected_entity, false);
-        //const centre_position = this.get_cell_position_from_coords(this.selected_entity, true);
         this.bag_entities[id].set_position(position.x, position.y, this.slot_width, this.slot_height);
       }
     }

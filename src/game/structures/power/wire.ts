@@ -219,10 +219,10 @@ export class WirePowerMap{
 }
 
 export class WireInventory extends Inventory.InventoryEntity{
-  constructor(start: number=10){
+  constructor(start: number=1){
     super(Inventory.InventoryEntityType.Wire, Inventory.InventoryEntityId.Wire);
     this.icon_texture = 'wireplacer';
     this.max_stack = 10;
-    this.stack_count = (start > 10 || start < 0) ? 10 : start;
+    this.stack_count = (start > 10 || start < 0) ? 1 : start;
   }
 }

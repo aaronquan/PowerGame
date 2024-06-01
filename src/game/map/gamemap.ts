@@ -6,6 +6,9 @@ import * as StructureTiles from "../structures/map/structuretiles";
 import * as Power from "./../structures/power/power";
 import * as Turret from "./../structures/turret/turret";
 import * as MapTiles from "./maptiles";
+import * as Pickup from "./../entity/pickup/pickup";
+
+import * as Inventory from "./../entity/inventory/inventory";
 
 export class GameMap{
   grid:Grid.GridMap;
@@ -15,6 +18,8 @@ export class GameMap{
   cell_height: number;
   scene: Phaser.Scene;
   power_bar: Power.PowerBar;
+
+  pickup_collection: Pickup.PickUpCollection; 
 
   highlights: Structure.StructureMap;
 
@@ -32,6 +37,11 @@ export class GameMap{
 
     this.power_bar = new Power.PowerBar(100, 50);
     this.generator_locations = [];
+
+    this.pickup_collection = new Pickup.PickUpCollection();
+    this.pickup_collection.add_pickup_id(Pickup.PickUpId.Wire, this.scene, 240, 100);
+    this.pickup_collection.add_pickup_id(Pickup.PickUpId.Wire, this.scene, 280, 120);
+    this.pickup_collection.add_pickup_id(Pickup.PickUpId.Wire, this.scene, 240, 200);
   }
   init_grid(){
     this.grid.fill_walls(this.scene);
@@ -55,7 +65,8 @@ export class GameMap{
   add_wire_on_player(world_point: Phaser.Math.Vector2, player:Player,
     wire_type: Wire.WireId
   ):boolean{
-    if(player.n_wires == 0) return false;
+    const wire_id = Inventory.InventoryEntityId.Wire;
+    if(player.inventory.find_entity_id_count(wire_id) === 0) return false;
     const player_grid_coords = player.get_grid_position(this.grid);
     const mouse_grid_coords = this.grid.grid_coords(world_point);
     if(player_grid_coords && mouse_grid_coords){
@@ -63,8 +74,8 @@ export class GameMap{
       if(orth_distance <= 3){
         const has_added_wire = this.wire_map.add_wire(this.scene, wire_type, mouse_grid_coords);
         if(has_added_wire){
-          //player.inventory.find_first_free_entity_id // remove wire from inventory
-          player.n_wires--;
+          player.inventory.remove_entity_id(wire_id);
+
         }
         return has_added_wire;
       }
@@ -72,6 +83,7 @@ export class GameMap{
     return false;
   }
   delete_wire_on_player(world_point: Phaser.Math.Vector2, player:Player):boolean{
+    const wire_id = Inventory.InventoryEntityId.Wire;
     const player_grid_coords = player.get_grid_position(this.grid);
     const mouse_grid_coords = this.grid.grid_coords(world_point);
     if(player_grid_coords && mouse_grid_coords){
@@ -79,7 +91,8 @@ export class GameMap{
       if(orth_distance <= 3){
         const wires_removed = this.wire_map.remove_wire(mouse_grid_coords);
         if(wires_removed > 0){
-          player.n_wires += wires_removed;
+          player.inventory.add_entity_id(wire_id);
+          console.log("wire removed");
         }
         return wires_removed > 0;
       }
@@ -135,6 +148,10 @@ export class GameMap{
   }
   toggle_highlights(){
     this.highlights.toggle_visible();
+  }
+
+  update_pickups(player: Player){
+    this.pickup_collection.update_player(player);
   }
 }
 

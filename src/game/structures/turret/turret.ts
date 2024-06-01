@@ -5,6 +5,8 @@ import * as Projectile from "./../../projectiles/projectile";
 import * as Player from "./../../player/player";
 import * as Power from "../power/power";
 
+import * as Positions from "../../entity/positions";
+
 export class TurretManager{
   turrets: Map<number, TurretBase>;
   next_id: number;
@@ -92,6 +94,8 @@ export class TurretBase extends StructureTile{
 }
 
 export class LookDirectionTurret extends TurretBase{
+  range: number;
+  range_sq: number;
   look_angle: number;
   target: Phaser.Math.Vector2 | undefined;
   cannon: DisplaySprite;
@@ -101,38 +105,18 @@ export class LookDirectionTurret extends TurretBase{
     this.cannon = new DisplaySprite(scene, this.x, this.y, 'turret_cannon');
     this.target = undefined;
   }
+  set_range(r:number){
+    this.range = r;
+    this.range_sq = r*r;
+  }
   move_direction(point: Phaser.Math.Vector2){
     this.target = point;
     const vec = new Phaser.Math.Vector2(point.x - this.x, point.y - this.y);
     const angle = vec.angle();
     this.cannon.setRotation(angle+Math.PI/2);
   }
-
-}
-
-export class BallProjectileTurret extends LookDirectionTurret{
-  range: number;
-  interval: number;
-
-  constructor(scene:Phaser.Scene, gx: number, gy:number, power: Power.PowerBar){
-    super(scene, gx, gy, power);
-    this.range = 350;
-    this.interval = 1000;
-    this.power_consumption = 2;
-  }
-  shoot_proj(proj_manager:Projectile.ProjectileManager): boolean{
-    let shooting = false;
-    if(this.target){
-      const proj = new Projectile.BallProjectile(this.scene, this.x, this.y);
-      proj.set_target(this.look_angle, this.target);
-      proj_manager.add_projectile(proj);
-      shooting = true;
-    }
-    this.scene.time.addEvent({delay: this.interval, callback: () => this.shoot(proj_manager)});
-    return shooting;
-  }
   aim_closest_critter(critter_collection:Critter.CritterCollection){
-    let dist = this.range*this.range;
+    let dist = this.range_sq;
     let closest_critter:Critter.Critter | undefined = undefined;
     for(const [id, c] of critter_collection.critters){
       const vec = new Phaser.Math.Vector2(c.x - this.x, c.y - this.y);
@@ -149,4 +133,46 @@ export class BallProjectileTurret extends LookDirectionTurret{
       this.target = undefined;
     }
   }
+}
+
+export class BallProjectileTurret extends LookDirectionTurret{
+  interval: number;
+
+  constructor(scene:Phaser.Scene, gx: number, gy:number, power: Power.PowerBar){
+    super(scene, gx, gy, power);
+    this.set_range(350);
+    this.interval = 1000;
+    this.power_consumption = 2;
+  }
+  shoot_proj(proj_manager:Projectile.ProjectileManager): boolean{
+    let shooting = false;
+    if(this.target){
+      const proj = new Projectile.BallProjectile(this.scene, this.x, this.y);
+      proj.set_target(this.look_angle, this.target);
+      proj_manager.add_projectile(proj);
+      shooting = true;
+    }
+    this.scene.time.addEvent({delay: this.interval, callback: () => this.shoot(proj_manager)});
+    return shooting;
+  }
+}
+
+export class TazerTurret extends LookDirectionTurret{
+  
+  constructor(scene:Phaser.Scene, gx: number, gy:number, power: Power.PowerBar){
+    super(scene, gx, gy, power);
+    this.range = 150;
+    this.range_sq = this.range*this.range;
+    this.power_consumption = 1;
+  }
+  shoot_proj(proj_manager:Projectile.ProjectileManager): boolean{
+    if(this.target){
+
+    }
+    return false;
+  }
+}
+
+export class ShockLandTurret extends TurretBase{
+  
 }

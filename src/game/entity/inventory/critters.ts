@@ -1,5 +1,6 @@
-import * as Inventory from "./inventory";
+
 import * as Critter from "./../../enemies/critter";
+import * as Inventory from "./inventory";
 
 export class CritterInventory extends Inventory.InventoryEntity{
   constructor(texture: string|undefined, id:Inventory.InventoryEntityId){
