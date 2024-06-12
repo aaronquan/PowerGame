@@ -64,7 +64,7 @@ export class Preloader extends Scene
         red.destroy();
 
 
-        //turret/general
+        //general
         const circle32 = this.add.graphics();
         circle32.fillStyle(0xffffff, 1);
         circle32.fillCircle(16,16, 16);
@@ -74,8 +74,10 @@ export class Preloader extends Scene
         circle32.fillStyle(0xffffff, 1);
         circle32.fillCircle(3,3, 3);
         circle32.generateTexture('circle6', 6, 6);
-        
+
+        //turret
         this.load.image('turret_cannon', 'turret/cannon.png');
+        this.load.image('turret_tazer_spout', 'turret/tazer_spout.png');
 
         /*
         const player_graphics = this.add.graphics();

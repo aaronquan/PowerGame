@@ -100,15 +100,27 @@ export class GameMap{
     return false;
   }
 
-  add_turret(world_point: Phaser.Math.Vector2, turrets:Turret.TurretManager): number | undefined{
+  add_turret(world_point: Phaser.Math.Vector2, turrets:Turret.TurretManager, type: StructureTiles.StructureType): number | undefined{
     const grid_coords = this.grid.grid_coords(world_point);
     if(grid_coords){
+      this.add_turret_coords(grid_coords, turrets, type);
+      /*
       const turret = this.structure_map.add_structure_type(this.scene, 
-        StructureTiles.StructureType.BallProjectileTurret, grid_coords, this.power_bar);
+        type, grid_coords, this.power_bar);
       if(turret){
         this.refresh_power();
         return turrets.add_turret(turret as Turret.TurretBase);
-      }
+      }*/
+    }
+    return undefined;
+  }
+  add_turret_coords(grid_coords: Grid.GridCoordinate, turrets:Turret.TurretManager, type: StructureTiles.StructureType)
+  : number | undefined{
+    const turret = this.structure_map.add_structure_type(this.scene, 
+      type, grid_coords, this.power_bar);
+    if(turret){
+      this.refresh_power();
+      return turrets.add_turret(turret as Turret.TurretBase);
     }
     return undefined;
   }

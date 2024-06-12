@@ -5,6 +5,7 @@ import * as Projectile from "./../../projectiles/projectile";
 import * as Player from "./../../player/player";
 import * as Power from "../power/power";
 
+import * as Sprites from "./../../graphics/sprites";
 import * as Positions from "../../entity/positions";
 
 export class TurretManager{
@@ -53,13 +54,18 @@ export class TurretBase extends StructureTile{
   //power: boolean
   power_bar: Power.PowerBar;
   power_consumption: number;
-  ready: boolean
+
+  ready: boolean;
+  timed_shooting: boolean;
+  damage_dealt: number;
+
   constructor(scene:Phaser.Scene, gx: number, gy:number, power: Power.PowerBar){
     super(scene, gx,  gy, 'circle32');
     this.power_bar = power;
     this.power = false;
     this.power_consumption = 0;
     this.ready = true;
+    this.timed_shooting = true;
   }
   move_direction(point: Phaser.Math.Vector2){
 
@@ -70,7 +76,7 @@ export class TurretBase extends StructureTile{
       if(can_shoot){
         const has_shot = this.shoot_proj(proj_manager);
         if(has_shot){
-          this.ready = false
+          if(this.timed_shooting) this.ready = false;
           this.power_bar.spend_power(this.power_consumption);
           return true;
         }
@@ -93,17 +99,20 @@ export class TurretBase extends StructureTile{
   }
 }
 
-export class LookDirectionTurret extends TurretBase{
+export class LookPositionTurret extends TurretBase{
   range: number;
   range_sq: number;
   look_angle: number;
   target: Phaser.Math.Vector2 | undefined;
-  cannon: DisplaySprite;
+  cannon: DisplaySprite | undefined;
   constructor(scene:Phaser.Scene, gx: number, gy:number, power: Power.PowerBar){
     super(scene, gx, gy, power);
     this.look_angle = 0;
-    this.cannon = new DisplaySprite(scene, this.x, this.y, 'turret_cannon');
+    this.cannon = undefined;
     this.target = undefined;
+  }
+  set_default_cannon(){
+    this.cannon = new DisplaySprite(this.scene, this.x, this.y, 'turret_cannon');
   }
   set_range(r:number){
     this.range = r;
@@ -113,7 +122,10 @@ export class LookDirectionTurret extends TurretBase{
     this.target = point;
     const vec = new Phaser.Math.Vector2(point.x - this.x, point.y - this.y);
     const angle = vec.angle();
-    this.cannon.setRotation(angle+Math.PI/2);
+    this.cannon?.setRotation(angle+Math.PI/2);
+  }
+  on_target_exit(): void {
+
   }
   aim_closest_critter(critter_collection:Critter.CritterCollection){
     let dist = this.range_sq;
@@ -131,11 +143,48 @@ export class LookDirectionTurret extends TurretBase{
       this.move_direction(point);
     }else{
       this.target = undefined;
+      this.on_target_exit();
     }
   }
 }
 
-export class BallProjectileTurret extends LookDirectionTurret{
+export class LookGameObjectTurret extends TurretBase{
+  range: number;
+  range_sq: number;
+  look_angle: number;
+  target: Sprites.DisplayObject | undefined;
+  cannon: DisplaySprite | undefined;
+  constructor(scene:Phaser.Scene, gx: number, gy:number, power: Power.PowerBar){
+    super(scene, gx, gy, power);
+    this.look_angle = 0;
+    this.cannon = undefined;
+    this.target = undefined;
+  }
+  aim_closest_critter(critter_collection:Critter.CritterCollection){
+    let dist = this.range_sq;
+    let closest_critter:Critter.Critter | undefined = undefined;
+    for(const [id, c] of critter_collection.critters){
+      const vec = new Phaser.Math.Vector2(c.x - this.x, c.y - this.y);
+      const len = vec.lengthSq();
+      if(vec.lengthSq() < dist){
+        dist = len;
+        closest_critter = c;
+      }
+    }
+    if(closest_critter){
+      //const point = new Phaser.Math.Vector2(closest_critter.x, closest_critter.y);
+      this.target = closest_critter;
+      const vec = new Phaser.Math.Vector2(closest_critter.x - this.x, closest_critter.y - this.y);
+      const angle = vec.angle();
+      this.cannon?.setRotation(angle+Math.PI/2);
+    }else{
+      this.target = undefined;
+      //this.on_target_exit();
+    }
+  }
+}
+
+export class BallProjectileTurret extends LookPositionTurret{
   interval: number;
 
   constructor(scene:Phaser.Scene, gx: number, gy:number, power: Power.PowerBar){
@@ -143,6 +192,7 @@ export class BallProjectileTurret extends LookDirectionTurret{
     this.set_range(350);
     this.interval = 1000;
     this.power_consumption = 2;
+    this.set_default_cannon();
   }
   shoot_proj(proj_manager:Projectile.ProjectileManager): boolean{
     let shooting = false;
@@ -157,19 +207,46 @@ export class BallProjectileTurret extends LookDirectionTurret{
   }
 }
 
-export class TazerTurret extends LookDirectionTurret{
-  
+export class TazerTurret extends LookGameObjectTurret{
+  hit_circle: Phaser.Geom.Circle;
+  //tazer_graphics: Phaser.GameObjects.Graphics;
+  projectile_id: number | undefined; // use projectile instead todo
+  projectile: Projectile.StoredProjectile | undefined; //
+  shooting: boolean;
   constructor(scene:Phaser.Scene, gx: number, gy:number, power: Power.PowerBar){
     super(scene, gx, gy, power);
+    this.cannon = new DisplaySprite(this.scene, this.x, this.y, "turret_tazer_spout");
     this.range = 150;
     this.range_sq = this.range*this.range;
-    this.power_consumption = 1;
+    this.power_consumption = 0.05;
+    this.hit_circle = new Phaser.Geom.Circle(this.x, this.y, this.range);
+    this.projectile_id = undefined;
+    this.projectile = undefined;
+    this.shooting = false;
+    this.timed_shooting = false;
   }
   shoot_proj(proj_manager:Projectile.ProjectileManager): boolean{
-    if(this.target){
-
+    if(this.target && !this.shooting){
+      const proj = new Projectile.TazerProjectileCircle(this.scene, this.x, this.y, this.range);
+      proj.set_target(this.target);
+      proj.update_hit_graphics();
+      this.projectile_id = proj_manager.add_projectile(proj);
+      this.shooting = true;
+    }else if(this.shooting && !this.target){
+      if(this.projectile_id !== undefined){
+        proj_manager.delete_projectile(this.projectile_id);
+        this.projectile_id = undefined;
+      }
+      this.shooting = false;
     }
-    return false;
+    if(this.projectile_id !== undefined){
+      const proj = proj_manager.projectiles.get(this.projectile_id) as Projectile.TazerProjectileCircle;
+      proj.update_hit_graphics();
+    }
+    return this.shooting;
+  }
+  on_target_exit(): void {
+    //this.shooting = false;
   }
 }
 

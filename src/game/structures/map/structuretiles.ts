@@ -5,7 +5,7 @@ import * as Entity from "./../../entity/entity";
 
 export enum StructureType {
   Default, Generator, RedHighlight,
-  BaseTurret, BallProjectileTurret
+  BaseTurret, BallProjectileTurret, TazerTurret
 }
 
 export class StructureTile extends DisplaySprite{

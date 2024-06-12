@@ -17,6 +17,7 @@ import * as Projectile from "../projectiles/projectile";
 
 import * as Turret from './../structures/turret/turret';
 import * as Wire from "../structures/power/wire";
+import { StructureType } from "../structures/map/structuretiles";
 
 export class GridTest extends Scene{
   camera: Phaser.Cameras.Scene2D.Camera;
@@ -66,7 +67,10 @@ export class GridTest extends Scene{
     //this.test_turret.shoot(this.player.projectiles);
     //this.map.structure_map.add_structure(this.test_turret, {x:3, y:3});
 
-    //this.turrets.add_turret(this.test_turret);
+    //const turret = new Turret.TazerTurret(this, 3, 5, this.map.power_bar);
+    //this.map.structure_map.add_structure(turret, {x:3, y:3});
+    //this.turrets.add_turret(turret);
+
     this.turrets.update_power(this.player.projectiles);
 
     this.physics.add.collider(this.player, this.map.grid.walls!,
@@ -74,14 +78,15 @@ export class GridTest extends Scene{
         
       }
     )
-
+    /*
     this.physics.add.collider(this.player.projectiles.as_array(), this.map.grid.walls!,
       (o1, o2) => {
+        console.log("wall");
         const proj = o1 as Projectile.Projectile;
-        const id:number = proj.getData('id');
+        const id:number = proj.getData('projectile_id');
         this.player.projectiles.delete_projectile(id);
       }
-    );
+    );*/
     //this.physics.add.collider(this.critters.) // to do critters / structure
 
     this.key_map.add_keys(this.input, ['W', 'A', 'S', 'D']);
@@ -90,8 +95,9 @@ export class GridTest extends Scene{
       const world_point = this.camera.getWorldPoint(pointer.x, pointer.y);
       const info = this.map.get_info(world_point);
       this.ui.update_display_info(info);
-      const inventory_grid_coords = this.player.inventory.mouse_over(pointer);
-      //console.log(inventory_grid_coords);
+
+
+
     });
     this.input.on('pointerdown', (pointer:Phaser.Input.Pointer) => {
       this.player.inventory.mouse_down(pointer);
@@ -99,10 +105,10 @@ export class GridTest extends Scene{
       const world_point = this.camera.getWorldPoint(pointer.x, pointer.y);
       if(this.key_map.is_key_down(Phaser.Input.Keyboard.KeyCodes.CTRL)){
         //place turret
-        const grid_coords = this.map.grid.grid_coords(world_point);
-        if(grid_coords){
-          this.map.add_turret(world_point, this.turrets);
-        }
+        //const grid_coords = this.map.grid.grid_coords(world_point);
+        //if(grid_coords){
+        this.map.add_turret(world_point, this.turrets, StructureType.TazerTurret);
+        //}
       }
       else if(this.player.weapons.get_current_type() === Weapons.WeaponTypes.Wire){
         if(this.key_map.is_key_down(Phaser.Input.Keyboard.KeyCodes.SHIFT)){
@@ -193,7 +199,7 @@ export class GridTest extends Scene{
       //this.spawn_blue()
     }});
     
-    const test_enemy_target = this.map.grid.global_coordinates({x:5, y:5}, true);
+    const test_enemy_target = this.map.grid.global_coordinates({x:6, y:5}, true);
     console.log(test_enemy_target);
     //this.critters.set_target(test_enemy_target);
 
@@ -280,7 +286,7 @@ export class GridTest extends Scene{
       this.map.grid.set_grid_light_squares(world_return.light_squares);
     }
 
-    const player_point_on_grid = this.map.grid.grid_coords(this.player.get_position());
+    //const player_point_on_grid = this.map.grid.grid_coords(this.player.get_position());
 
 
     this.camera.centerOn(this.player.x, this.player.y);

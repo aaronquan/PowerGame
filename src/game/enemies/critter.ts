@@ -9,6 +9,12 @@ import * as Entity from "./../entity/entity";
 import * as Sprites from "../graphics/sprites";
 import * as Critters from "../entity/inventory/critters";
 
+
+export type StoredCritter = {
+  id:number;
+  critter: Critter;
+}
+
 export enum CritterType {
   Blue
 }
@@ -43,7 +49,9 @@ export class CritterCollection{
   add_critter(critter:Critter):number{
     const id = this.next_id;
     this.critters.set(this.next_id, critter);
-    critter.setData('id', id);
+    critter.setData('critter_id', id);
+    const entity_id:Entity.GameObjectIdentifier = {type: Entity.EntityType.Critter, id: id};
+    critter.setData('entity_id', entity_id);
     this.next_id += 1;
     return id;
   }
@@ -69,27 +77,39 @@ export class CritterCollection{
     }
   }
   player_hit_enemy_test(player: Player.Player, projectiles:Projectile.ProjectileManager){
-    for(const [id, critter] of this.critters){
-      for(const [proj_id, proj] of projectiles.projectiles){
-        if(proj.critter_collision(critter)){
+    for(const [proj_id, proj] of projectiles.projectiles){
+      if(proj.get_id() === Projectile.ProjectileId.Tazer){
+        const target = proj.get_target();
+        const object_identifier:Entity.GameObjectIdentifier | undefined = target?.getData('entity_id');
+        if(object_identifier == undefined) continue;
+        console.log(object_identifier);
+        const critter = this.critters.get(object_identifier.id);
+        if(critter){
           const effect:Effects.ProjectileCritterHitEffect = critter.handle_projectile_hit_effect(proj);
-          if(effect.capture){
-            const new_inv_critter = critter.get_inventory();
-            player.inventory.add_entity(new_inv_critter);
+          this.run_effect(effect, player, projectiles, proj_id, critter, object_identifier.id);
+        }
+      }else{
+        for(const [critter_id, critter] of this.critters){
+          if(proj.critter_collision(critter)){
+            const effect:Effects.ProjectileCritterHitEffect = critter.handle_projectile_hit_effect(proj);
+            this.run_effect(effect, player, projectiles, proj_id, critter, critter_id);
           }
-          if(effect.destroy_critter){
-            this.remove_critter(id);
-          }
-          if(effect.destroy_projectile){
-            projectiles.delete_projectile(proj_id);
-          }
-          //use somewhere else
-          //const proj_effect = proj.on_hit();
-          //if(proj_effect.destroy){
-          //  projectiles.delete_projectile(proj_id);
-          //}
         }
       }
+    }
+  }
+  run_effect(effect:Effects.ProjectileCritterHitEffect, player: Player.Player, projectiles:Projectile.ProjectileManager,
+    projectile_id:number, critter: Critter, critter_id: number)
+  {
+    if(effect.capture){
+      const new_inv_critter = critter.get_inventory();
+      player.inventory.add_entity(new_inv_critter);
+    }
+    if(effect.destroy_critter){
+      this.remove_critter(critter_id);
+    }
+    if(effect.destroy_projectile){
+      projectiles.delete_projectile(projectile_id);
     }
   }
   remove_critter(index: number){
@@ -193,16 +213,15 @@ export class Critter extends Enemy{
     return new Phaser.Math.Vector2(this.x, this.y);
   }
   handle_projectile_hit_effect(proj:Projectile.Projectile):Effects.ProjectileCritterHitEffect{
-    switch(proj.get_type()){
-      case Projectile.ProjectileType.Net:
+    switch(proj.get_id()){
+      case Projectile.ProjectileId.Net:
         return {destroy_critter: true, destroy_projectile: true, capture: true};
-      case Projectile.ProjectileType.Tazer:
-        //const tazer_proj = proj as TazerProjectile;
+      case Projectile.ProjectileId.Tazer: 
         this.take_damage(proj.damage);
-        proj.update_hit_graphics(this.get_position());
+        //proj.update_hit_graphics();
         const destroy = this.take_damage(proj.damage);
         return {destroy_critter: destroy};
-      case Projectile.ProjectileType.Ball:
+      case Projectile.ProjectileId.Ball:
         proj.destroy();
         return {destroy_critter: this.take_damage(proj.damage), destroy_projectile: true};
     }

@@ -50,6 +50,9 @@ export class StructureMap{
       case StructureTiles.StructureType.BallProjectileTurret:
         structure = new Turret.BallProjectileTurret(scene, coord.x, coord.y, power);
         break;
+      case StructureTiles.StructureType.TazerTurret:
+        structure = new Turret.TazerTurret(scene, coord.x, coord.y, power);
+        break;
       default:
         break;
     } 

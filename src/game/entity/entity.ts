@@ -1,6 +1,16 @@
 import * as Sprites from "../graphics/sprites";
 import * as InventoryUI from "./../ui/player_inventory";
 
+//to identity entity
+export enum EntityType {
+  Structure, Critter, Projectile
+}
+
+export type GameObjectIdentifier = {
+  type: EntityType,
+  id: number
+}
+
 export class LivingMovingEntity extends Sprites.DisplayPhysicsSprite{
   max_health: number;
   health: number;
@@ -9,13 +19,11 @@ export class LivingMovingEntity extends Sprites.DisplayPhysicsSprite{
     super(scene, x, y, texture);
     this.max_health = 10;
     this.health = 10;
-    //this.show_health_bar = false;
     this.health_bar = new HealthBar(this.scene);
   }
   die(){
     this.destroy();
     this.health_bar.destroy();
-    console.log("destroy health bar");
   }
   take_damage(damage:number):boolean{
     this.health -= damage;

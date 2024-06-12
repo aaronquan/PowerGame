@@ -140,8 +140,6 @@ export class WirePowerMap{
     const coord_wire = this.wire_sprites[coord.y][coord.x];
     if(coord_wire){
       coord_wire.destroy();
-      
-      console.log(coord_wire);
       switch(coord_wire.get_id()){
         case WireId.Vertical:
           this.wire_sprites[coord.y][coord.x] = undefined;

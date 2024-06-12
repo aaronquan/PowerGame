@@ -1,3 +1,6 @@
+export type DisplayObject = DisplayPhysicsSprite | DisplayPhysicsImage | DisplaySprite | DisplayImage;
+
+
 export class DisplayPhysicsSprite extends Phaser.Physics.Arcade.Sprite{
   constructor(scene: Phaser.Scene, x:number, y:number, texture:string){
       super(scene, x, y, texture);
