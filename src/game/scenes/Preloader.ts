@@ -35,9 +35,11 @@ export class Preloader extends Scene
         this.load.image('logo', 'logo.png');
         this.load.image('star', 'star.png');
 
+        //tiles
         this.load.image('grey', 'map/grey.png');
         this.load.image('wall', 'map/wall.png');
-        this.load.image('nothing', 'nothing.png')
+        this.load.image('test_tile', 'map/test_tile.png');
+        this.load.image('nothing', 'nothing.png');
         
         this.load.image('player', 'player/player1.png');
 
@@ -94,7 +96,8 @@ export class Preloader extends Scene
         //  For example, you can define global animations here, so we can use them in other scenes.
 
         //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.
-        this.scene.start('GridTest');
+        //this.scene.start('GridTest');
+        this.scene.start('PowerGame');
         //this.scene.start('MainMenu');
     }
 }

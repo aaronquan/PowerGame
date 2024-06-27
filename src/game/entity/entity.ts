@@ -11,7 +11,13 @@ export type GameObjectIdentifier = {
   id: number
 }
 
-export class LivingMovingEntity extends Sprites.DisplayPhysicsSprite{
+export interface LivingEntity{
+  max_health: number;
+  health: number;
+  take_damage(damage:number):boolean;
+}
+
+export class LivingMovingEntity extends Sprites.DisplayPhysicsSprite implements LivingEntity{
   max_health: number;
   health: number;
   health_bar: HealthBar;
@@ -55,8 +61,22 @@ export class LivingMovingEntity extends Sprites.DisplayPhysicsSprite{
 }
 
 //for structures
-export class StaticDestroyableEntity extends Sprites.DisplaySprite{
-
+export class StaticDestroyableEntity extends Sprites.DisplaySprite implements LivingEntity{
+  max_health: number
+  health: number;
+  constructor(scene: Phaser.Scene, x:number, y:number, texture:string){
+    super(scene, x, y, texture);
+    this.max_health = 10;
+    this.health = 10;
+  }
+  take_damage(damage:number):boolean{
+    this.health -= damage;
+    if(this.health < 0){
+      return true;
+    }
+    //this.health_bar.update_health(this.max_health, this.health);
+    return false;
+  }
 }
 
 class HealthBar{

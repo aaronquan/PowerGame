@@ -1,7 +1,8 @@
-import { DisplayPhysicsImage } from "../graphics/sprites";
 
-export const tile_width = 32;
-export const tile_height = 32;
+import * as Sprites from "../graphics/sprites";
+
+export const tile_width = 50;
+export const tile_height = 50;
 export const half_tile_width = tile_width/2;
 export const half_tile_height = tile_height/2;
 
@@ -22,18 +23,19 @@ export function tile_type_to_string(tile:TileType): string{
   }
 }
 
-export class MapTile extends DisplayPhysicsImage{
-  constructor(scene:Phaser.Scene, gx:number, gy:number, tile_texture:string){
-    super(scene, gx*tile_width+half_tile_width, gy*tile_height+half_tile_height, tile_texture);
+export class MapTile extends Sprites.DisplayImage{
+  constructor(scene:Phaser.Scene, x:number, y:number, tile_texture:string){
+    super(scene, x, y, tile_texture);
   }
   get_type():TileType{
     return TileType.Default;
   }
 }
 
+//may not need 
 export class MapFloor extends MapTile{
-  constructor(scene:Phaser.Scene, gx:number, gy:number){
-    super(scene, gx, gy, 'grey');
+  constructor(scene:Phaser.Scene, x:number, y:number){
+    super(scene, x, y, 'grey');
   }
   get_type():TileType{
     return TileType.Floor;
@@ -41,8 +43,8 @@ export class MapFloor extends MapTile{
 }
 
 export class MapWall extends MapTile{
-  constructor(scene:Phaser.Scene, gx:number, gy:number){
-    super(scene, gx, gy, 'wall');
+  constructor(scene:Phaser.Scene, x:number, y:number){
+    super(scene, x, y, 'wall');
   }
   get_type():TileType{
     return TileType.Wall;
@@ -50,8 +52,8 @@ export class MapWall extends MapTile{
 }
 
 export class RedHighlight extends MapTile{
-  constructor(scene:Phaser.Scene, gx:number, gy:number){
-    super(scene, gx, gy, 'wall');
+  constructor(scene:Phaser.Scene, x:number, y:number){
+    super(scene, x, y, 'wall');
   }
   get_type():TileType{
     return TileType.RedHighlight;

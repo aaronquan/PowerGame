@@ -1,7 +1,8 @@
-import * as MapTile from "./maptiles";
+import * as MapTiles from "./maptiles";
+import * as StructureTiles from './../structures/map/structuretiles';
 
 export class GridMap{
-  object_map: (MapTile.MapTile | undefined)[][];
+  object_map: (MapTiles.MapTile | undefined)[][];
   width: number;
   height: number;
   cell_width: number;
@@ -89,11 +90,11 @@ export class GridMap{
     for(let j = 0; j < this.height; j++){
       for(let i = 0; i < this.width; i++){
         if(i == 0 || j == 0 || i == this.width - 1 || j == this.height - 1){
-          const new_wall = new MapTile.MapWall(scene, i, j);
+          const new_wall = new MapTiles.MapWall(scene, i, j);
           this.object_map[j][i] = new_wall;
           this.walls.add(new_wall);
         }else{
-          const new_floor = new MapTile.MapFloor(scene, i, j);
+          const new_floor = new MapTiles.MapFloor(scene, i, j);
           this.object_map[j][i] = new_floor;
         }
         const x_scale = this.cell_width/32;
@@ -120,7 +121,7 @@ export class GridMap{
       this.object_map[square.y][square.x]?.setVisible(true);
     }
   }
-  get_object(coord:GridCoordinate): MapTile.MapTile | undefined{
+  get_object(coord:GridCoordinate): MapTiles.MapTile | undefined{
     return this.object_map[coord.y][coord.x];
   }
 }
@@ -136,6 +137,77 @@ export type GridCoordinate = {
 
 export type LightSquare = GridCoordinate & {
   distance_sq: number
+}
+
+export type PowerGameMapTile = {
+  tile?: MapTiles.MapTile;
+  structure?: StructureTiles.StructureTile;
+  highlight?: MapTiles.RedHighlight;
+}
+
+//new function to use as map
+export class GenericObjectGrid<T>{
+  tiles: (T | undefined)[][];
+  x: number; y: number;
+  width: number; // in cells
+  height: number;
+  cell_width: number;
+  cell_height: number;
+  constructor(width:number=10, height:number=10, 
+    cw:number=32, ch:number=32, x: number=0, y:number=0){
+    this.x = x; this.y = y;
+    this.width = width;
+    this.height = height;
+    this.cell_width = cw;
+    this.cell_height = ch;
+    this.tiles = [];
+    for(let j = 0; j < this.height; j++){
+      const row: (T | undefined)[] = [];
+      for(let i = 0; i < this.width; i++){
+        row.push(undefined);
+      }
+      this.tiles.push(row);
+    }
+  }
+  add_object(x:number, y:number, obj: T){
+    this.tiles[y][x] = obj;
+  }
+  get_object(x: number, y: number): (T|undefined){
+    return this.tiles[y][x];
+  }
+  get_object_known(x: number, y: number): T{ // unsafe
+    return this.tiles[y][x]!;
+  }
+  is_point_inside_grid(point: Phaser.Math.Vector2):boolean{
+    return point.x >= this.x && point.x < this.x+this.width*this.cell_width && point.y >= this.y && point.y < this.y+this.height*this.cell_height;
+  }
+  is_coord_inside_grid(coord:GridCoordinate):boolean{
+    return coord.x >= 0 && coord.x < this.width && coord.y >= 0 && coord.y < this.height;
+  }
+  grid_coords(point: Phaser.Math.Vector2):GridCoordinate | undefined{
+    if(!this.is_point_inside_grid(point)){
+      return undefined;
+    }
+    return {x:Math.floor(point.x/this.cell_width-this.x), y:Math.floor(point.y/this.cell_height-this.y)};
+  }
+  grid_coords_decimal(point: Phaser.Math.Vector2):Phaser.Math.Vector2 | undefined{
+    if(!this.is_point_inside_grid(point)){
+      return undefined;
+    }
+    return new Phaser.Math.Vector2(point.x/this.cell_width-this.x, point.y/this.cell_height-this.y);
+  }
+  global_coordinates(coord:GridCoordinate, center:boolean=false): Phaser.Math.Vector2{
+    if(center){
+      return new Phaser.Math.Vector2(coord.x*this.cell_width+(this.cell_width/2)-this.x, coord.y*this.cell_height+(this.cell_height/2)-this.y);
+    }
+    return new Phaser.Math.Vector2(coord.x*this.cell_width-this.x, coord.y*this.cell_height-this.y);
+  }
+  draw_grid_object(scene: Phaser.Scene, x:number=0, y:number=0): Phaser.GameObjects.Grid{
+    const x_offset = x+((this.width/2)*this.cell_width)+this.x;
+    const y_offset = y+((this.height/2)*this.cell_height)+this.y;
+    return scene.add.grid(x_offset, y_offset, this.width*this.cell_width, this.height*this.cell_height, 
+      this.cell_width, this.cell_height, 0xff0000, undefined, 0xff00ff);
+  }
 }
 
 export function grid_coordinate_equals(c1: GridCoordinate, c2: GridCoordinate): boolean{

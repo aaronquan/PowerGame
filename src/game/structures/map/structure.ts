@@ -44,9 +44,6 @@ export class StructureMap{
       case StructureTiles.StructureType.Generator:
         structure = new StructureTiles.GeneratorTile(scene, coord.x, coord.y);
         break;
-      case StructureTiles.StructureType.RedHighlight:
-        structure = new StructureTiles.RedHighlight(scene, coord.x, coord.y);
-        break;
       case StructureTiles.StructureType.BallProjectileTurret:
         structure = new Turret.BallProjectileTurret(scene, coord.x, coord.y, power);
         break;

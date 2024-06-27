@@ -1,4 +1,4 @@
-import { DisplaySprite } from '../../graphics/sprites';
+
 import {tile_width, tile_height, half_tile_width, half_tile_height} from '../../map/maptiles';
 import * as Critter from "./../../enemies/critter";
 import * as Entity from "./../../entity/entity";
@@ -8,7 +8,7 @@ export enum StructureType {
   BaseTurret, BallProjectileTurret, TazerTurret
 }
 
-export class StructureTile extends DisplaySprite{
+export class StructureTile extends Entity.StaticDestroyableEntity{
   power: boolean;
   changed_power: boolean;
   //collision_area: Phaser.Geom.Rectangle;
@@ -16,7 +16,6 @@ export class StructureTile extends DisplaySprite{
     super(scene, gx*tile_width+half_tile_width, gy*tile_height+half_tile_height, tile_texture);
     this.power = false;
     this.changed_power = false;
-    //this.collision_area = 
   }
   get_id():StructureType{
     return StructureType.Default;
@@ -27,16 +26,6 @@ export class StructureTile extends DisplaySprite{
   on_critter_collision(critter: Critter.Critter){
   }
 }
-
-export class RedHighlight extends StructureTile{
-  constructor(scene:Phaser.Scene, gx:number, gy:number){
-    super(scene, gx, gy, 'redhighlight');
-  }
-  get_id():StructureType{
-    return StructureType.RedHighlight;
-  }
-}
-
 export class GeneratorTile extends StructureTile{
   health: number;
   constructor(scene:Phaser.Scene, gx:number, gy:number){

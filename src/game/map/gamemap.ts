@@ -27,9 +27,9 @@ export class GameMap{
 
   constructor(scene: Phaser.Scene, width:number, height:number){
     this.scene = scene;
-    this.cell_height = 32;
     this.cell_width = 32;
-    this.grid = new Grid.GridMap(width, height, 32, 32);
+    this.cell_height = 32;
+    this.grid = new Grid.GridMap(width, height, this.cell_width, this.cell_height);
     this.wire_map = new Wire.WirePowerMap(width, height);
     this.structure_map = new Structure.StructureMap(width, height);
     this.highlights = new Structure.StructureMap(width, height);

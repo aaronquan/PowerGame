@@ -56,7 +56,8 @@ export class GridTest extends Scene{
     this.camera = this.cameras.main;
     this.camera.setBackgroundColor(0x000000);
 
-    this.player = new Player.Player(this, 100, 100, this.ui.player_inventory);
+    this.player = new Player.Player(this, 100, 100);
+    this.player.init_inventory(this.ui.player_inventory);
     this.player.set_power_bar(this.map.power_bar);
     this.player.setDepth(1);
     this.camera.centerOn(this.player.x, this.player.y);
@@ -77,7 +78,9 @@ export class GridTest extends Scene{
       (o1, o2) => {
         
       }
-    )
+    );
+
+    //this.physics.add.collider(this.)
     /*
     this.physics.add.collider(this.player.projectiles.as_array(), this.map.grid.walls!,
       (o1, o2) => {
@@ -95,8 +98,6 @@ export class GridTest extends Scene{
       const world_point = this.camera.getWorldPoint(pointer.x, pointer.y);
       const info = this.map.get_info(world_point);
       this.ui.update_display_info(info);
-
-
 
     });
     this.input.on('pointerdown', (pointer:Phaser.Input.Pointer) => {
@@ -209,7 +210,7 @@ export class GridTest extends Scene{
 
     this.ui.init_weapons(this.player.weapons);
     this.ui.init_inventory(this.player.inventory);
-    this.player.init_inventory()
+    //this.player.init_inventory()
   }
   change_weapon(index: number){
     this.player.change_weapon(index);

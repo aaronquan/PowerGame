@@ -19,11 +19,11 @@ export class PlayerInventory{
   width: number;
   height: number;
   inventory: Inventory.InventoryEntity[][];
-  ui: PlayerInventoryUI;
+  ui?: PlayerInventoryUI;
   entity_counts: Map<Inventory.InventoryEntityId, number>;
   available: Grid.GridCoordinate | undefined;
   selected_coord: Grid.GridCoordinate | undefined;
-  constructor(width: number, height:number, ui: PlayerInventoryUI){
+  constructor(width: number, height:number){
     this.width = width; this.height = height;
     this.inventory = [];
     for(let j = 0; j < this.height; j++){
@@ -33,47 +33,50 @@ export class PlayerInventory{
       }
       this.inventory.push(inventory_row);
     }
-    this.ui = ui;
+    this.ui = undefined;
     this.entity_counts = new Map();
     this.available = {x: 0, y: 0};
     this.selected_coord = undefined;
   }
+  connect_ui(ui: PlayerInventoryUI){
+    this.ui = ui;
+  }
   mouse_over(pointer: Phaser.Input.Pointer): Grid.GridCoordinate | undefined{
-    const inventory_grid_coords = this.ui.mouse_over(pointer, this.width, this.height);
-    this.ui.hover_on(inventory_grid_coords, this.height);
+    const inventory_grid_coords = this.ui?.mouse_over(pointer, this.width, this.height);
+    this.ui?.hover_on(inventory_grid_coords, this.height);
     return inventory_grid_coords;
   }
   mouse_down(pointer: Phaser.Input.Pointer){
-    const inventory_grid_coords = this.ui.mouse_over(pointer, this.width, this.height);
+    const inventory_grid_coords = this.ui?.mouse_over(pointer, this.width, this.height);
 
     if(pointer.rightButtonDown()){
       if(this.selected_coord && inventory_grid_coords){
         const pointer_entity = this.get_entity_coord(inventory_grid_coords);
         const selected_entity = this.get_entity_coord(this.selected_coord);
-        const action = this.ui.mouse_right_down(inventory_grid_coords, this.height, selected_entity, pointer_entity);
-        if(action.place_single){
+        const action = this.ui?.mouse_right_down(inventory_grid_coords, this.height, selected_entity, pointer_entity);
+        if(action && action.place_single){
           this.remove_from_entity_coord(this.selected_coord, 1);
           this.add_entity_coord(inventory_grid_coords, 1, selected_entity.id);
         }
       }
     }else if(pointer.leftButtonDown()){
-      const action = this.ui.mouse_left_down(inventory_grid_coords, this.height);
-      if(action.select){
+      const action = this.ui?.mouse_left_down(inventory_grid_coords, this.height);
+      if(action && action.select){
         this.selected_coord = action.select;
       }
     }
   }
   mouse_up(pointer: Phaser.Input.Pointer){
-    const inventory_grid_coords = this.ui.mouse_over(pointer, this.width, this.height);
+    const inventory_grid_coords = this.ui?.mouse_over(pointer, this.width, this.height);
     if(pointer.leftButtonReleased()){
       if(this.selected_coord && inventory_grid_coords){
         const pointer_entity = this.get_entity_coord(inventory_grid_coords);
         const selected_entity = this.get_entity_coord(this.selected_coord);
-        const action = this.ui.mouse_left_up(inventory_grid_coords, this.height, selected_entity, pointer_entity);
-        if(action.swap){
+        const action = this.ui?.mouse_left_up(inventory_grid_coords, this.height, selected_entity, pointer_entity);
+        if(action && action.swap){
           this.swap(action.swap.new, action.swap.old);
         }
-        if(action.stack){
+        if(action && action.stack){
           this.stack(inventory_grid_coords, this.selected_coord);
         }
         this.selected_coord = undefined;
@@ -188,7 +191,7 @@ export class PlayerInventory{
     const first_free_id = this.find_first_free_entity_id(entity.id);
     if(first_free_id){
       const rem = this.inventory[first_free_id.y][first_free_id.x].add_to_stack(n);
-      this.ui.update_stack(first_free_id, this.inventory[first_free_id.y][first_free_id.x].stack_count, this.height);
+      this.ui?.update_stack(first_free_id, this.inventory[first_free_id.y][first_free_id.x].stack_count, this.height);
       if(rem){
         //to do
         console.log("remaining")
@@ -201,7 +204,7 @@ export class PlayerInventory{
     }
     if(this.available){
       this.inventory[this.available.y][this.available.x] = entity;
-      this.ui.set_bag_cell(this.available, entity, this.height);
+      this.ui?.set_bag_cell(this.available, entity, this.height);
       this.next_available();
       this.#add_entity_counts(entity.id, n);
       return true;
@@ -222,7 +225,7 @@ export class PlayerInventory{
     const first_free_id = this.find_first_free_entity_id(id);
     if(first_free_id){
       const rem = this.inventory[first_free_id.y][first_free_id.x].add_to_stack(n);
-      this.ui.update_stack(first_free_id, this.inventory[first_free_id.y][first_free_id.x].stack_count, this.height);
+      this.ui?.update_stack(first_free_id, this.inventory[first_free_id.y][first_free_id.x].stack_count, this.height);
       if(rem){
         //to do
         console.log("remaining")
@@ -236,7 +239,7 @@ export class PlayerInventory{
     if(this.available){
       const entity = AllInventory.entity_inventory_from_id(id);
       this.inventory[this.available.y][this.available.x] = entity;
-      this.ui.set_bag_cell(this.available, entity, this.height);
+      this.ui?.set_bag_cell(this.available, entity, this.height);
       this.next_available();
       this.#add_entity_counts(entity.id, n);
       return true;
@@ -250,9 +253,9 @@ export class PlayerInventory{
       console.log(new_count);
       if(new_count > 0){
         this.inventory[first_free.y][first_free.x].add_to_stack(-n);
-        this.ui.update_stack(first_free, new_count, this.height);
+        this.ui?.update_stack(first_free, new_count, this.height);
       }else{
-        this.ui.clear_cell(first_free, this.height);
+        this.ui?.clear_cell(first_free, this.height);
         this.add_blank_coord(first_free);
       }
     }
